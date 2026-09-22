@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: api
+  config:
+    # Local runs read secrets from backend/spring-boot/.env (gitignored). Containers use real
+    # environment variables instead.
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

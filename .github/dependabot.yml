@@ -1,0 +1,41 @@
+version: 2
+
+updates:
+  - package-ecosystem: maven
+    directory: /backend/spring-boot
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      spring-boot:
+        patterns: ["org.springframework.boot*"]
+
+  - package-ecosystem: docker
+    directory: /backend/spring-boot
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: docker-compose
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope

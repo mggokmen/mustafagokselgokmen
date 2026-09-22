@@ -1,0 +1,68 @@
+name: Backend (Spring Boot)
+
+on:
+  pull_request:
+    paths:
+      - backend/spring-boot/**
+      - contract/**
+      - .github/workflows/backend-spring-boot.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - backend/spring-boot/**
+      - contract/**
+      - .github/workflows/backend-spring-boot.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Lint, build and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/spring-boot
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      # Format check (Spotless), code generation, compilation, unit and integration tests
+      # (Testcontainers uses the runner's Docker).
+      - run: ./mvnw -B verify
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: backend/spring-boot/target/surefire-reports/
+
+  image:
+    name: Docker image and vulnerability scan
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: backend/spring-boot/Dockerfile
+          tags: mustafagokselgokmen-api:ci
+          load: true
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Scan image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: mustafagokselgokmen-api:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"

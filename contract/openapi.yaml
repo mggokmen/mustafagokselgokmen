@@ -1,0 +1,551 @@
+openapi: 3.0.3
+
+info:
+  title: mustafagokselgokmen API
+  version: 1.0.0
+  description: |
+    Canonical API contract. Every backend implementation conforms to this document and every
+    client is generated from it. Conventions: docs/api.md.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Sign-in with Google, token refresh, logout and the current user.
+  - name: ContactMessages
+    description: Messages that signed-in users send through the contact form.
+
+paths:
+  /api/v1/auth/google:
+    post:
+      tags: [Auth]
+      operationId: loginWithGoogle
+      summary: Sign in with a Google ID token
+      description: |
+        Verifies the Google ID token (signature, issuer, audience, expiry, verified email).
+        Creates the user on first sign-in, refreshes their profile on later sign-ins, and returns
+        this API's own token pair. The Google token is not stored.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleLoginRequest'
+      responses:
+        '200':
+          description: Signed in. Returns a new access and refresh token pair.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refreshToken
+      summary: Exchange a refresh token for a new token pair
+      description: |
+        The presented refresh token is invalidated (rotation). Presenting an already rotated token
+        revokes every token of its family.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: New token pair.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Revoke a refresh token and its family
+      description: Idempotent. An unknown or already revoked token also returns 204.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '204':
+          description: Logged out.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Get the signed-in user
+      responses:
+        '200':
+          description: The signed-in user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/contact-messages:
+    get:
+      tags: [ContactMessages]
+      operationId: listContactMessages
+      summary: List contact messages
+      description: |
+        ADMIN sees every message; USER sees only their own.
+        `q` searches `subject`, case-insensitive. Default sort: `createdAt,desc`.
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/Size'
+        - $ref: '#/components/parameters/ContactMessageSort'
+        - $ref: '#/components/parameters/ContactMessageStatusFilter'
+        - $ref: '#/components/parameters/Query'
+      responses:
+        '200':
+          description: One page of contact messages.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactMessagePage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [ContactMessages]
+      operationId: createContactMessage
+      summary: Send a contact message
+      description: |
+        Any signed-in user. The message is created with status `NEW`; its subject and body cannot
+        be edited afterwards. Limited to 5 messages per user per hour.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContactMessageRequest'
+      responses:
+        '201':
+          description: Sent.
+          headers:
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /api/v1/contact-messages/{contactMessageId}:
+    parameters:
+      - $ref: '#/components/parameters/ContactMessageId'
+    get:
+      tags: [ContactMessages]
+      operationId: getContactMessage
+      summary: Get a contact message
+      description: Visible to its author and to ADMIN. Anyone else receives 404.
+      responses:
+        '200':
+          description: The contact message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/contact-messages/{contactMessageId}/status:
+    parameters:
+      - $ref: '#/components/parameters/ContactMessageId'
+    put:
+      tags: [ContactMessages]
+      operationId: updateContactMessageStatus
+      summary: Change the status of a contact message
+      description: |
+        Requires role ADMIN. Allowed transitions: `NEW → IN_PROGRESS`, `NEW → RESOLVED`,
+        `IN_PROGRESS → RESOLVED`, `RESOLVED → IN_PROGRESS`. Setting the current status again
+        changes nothing and returns 200. `version` must equal the message's current version;
+        a stale version or a disallowed transition returns 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContactMessageStatusRequest'
+      responses:
+        '200':
+          description: The updated contact message.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: Zero-based page index.
+      schema:
+        type: integer
+        format: int32
+        minimum: 0
+        default: 0
+    Size:
+      name: size
+      in: query
+      description: Page size.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+    Query:
+      name: q
+      in: query
+      description: Case-insensitive text search. Searched fields are listed per operation.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+    ContactMessageSort:
+      name: sort
+      in: query
+      description: '`<field>,<direction>`. Sortable fields: `createdAt`, `updatedAt`.'
+      schema:
+        type: string
+        pattern: '^(createdAt|updatedAt),(asc|desc)$'
+        default: createdAt,desc
+    ContactMessageStatusFilter:
+      name: status
+      in: query
+      description: Only messages with one of these statuses. Repeat the parameter to pass several.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          $ref: '#/components/schemas/ContactMessageStatus'
+    ContactMessageId:
+      name: contactMessageId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  headers:
+    Location:
+      description: URL of the created resource.
+      schema:
+        type: string
+        format: uri-reference
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+
+  responses:
+    BadRequest:
+      description: Malformed request or failed validation (`VALIDATION_FAILED`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthorized:
+      description: Missing, invalid or expired credentials (`UNAUTHENTICATED`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Authenticated but not permitted (`FORBIDDEN`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Resource does not exist or is not visible to the caller (`NOT_FOUND`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Stale `version` or a disallowed state transition (`CONFLICT`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    TooManyRequests:
+      description: Rate limit exceeded (`RATE_LIMITED`).
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details, extended with `code` and `errors`.
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          example: about:blank
+        title:
+          type: string
+          example: Validation failed
+        status:
+          type: integer
+          format: int32
+          example: 400
+        detail:
+          type: string
+          example: Request body has 1 invalid field
+        instance:
+          type: string
+          format: uri-reference
+          example: /api/v1/contact-messages
+        code:
+          type: string
+          description: |
+            Machine-readable error code. Clients branch on this value only.
+            Known values: VALIDATION_FAILED, UNAUTHENTICATED, FORBIDDEN, NOT_FOUND, CONFLICT,
+            RATE_LIMITED, INTERNAL_ERROR. New values may be added; clients must treat unknown
+            values as a generic error.
+          example: VALIDATION_FAILED
+        errors:
+          type: array
+          description: Present only when `code` is `VALIDATION_FAILED`.
+          items:
+            $ref: '#/components/schemas/FieldError'
+
+    FieldError:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          description: Dot/index path of the invalid field, e.g. `items[0].name`.
+          example: subject
+        message:
+          type: string
+          example: must not be blank
+
+    GoogleLoginRequest:
+      type: object
+      required: [idToken]
+      properties:
+        idToken:
+          type: string
+          description: ID token issued by Google to one of this project's OAuth clients.
+          minLength: 1
+          maxLength: 4096
+
+    RefreshTokenRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+          maxLength: 512
+
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, tokenType, expiresIn]
+      properties:
+        accessToken:
+          type: string
+          description: JWT, valid for `expiresIn` seconds.
+        refreshToken:
+          type: string
+          description: Opaque token, valid for 30 days, single use.
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          format: int32
+          description: Access token lifetime in seconds.
+          example: 900
+
+    Role:
+      type: string
+      enum: [USER, ADMIN]
+
+    UserResponse:
+      type: object
+      required: [id, email, name, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+        role:
+          $ref: '#/components/schemas/Role'
+
+    UserSummary:
+      type: object
+      description: A user embedded in another resource.
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+
+    ContactMessageStatus:
+      type: string
+      enum: [NEW, IN_PROGRESS, RESOLVED]
+
+    ContactMessageResponse:
+      type: object
+      required: [id, subject, message, status, author, version, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          example: Question about your Android app
+        message:
+          type: string
+        status:
+          $ref: '#/components/schemas/ContactMessageStatus'
+        author:
+          $ref: '#/components/schemas/UserSummary'
+        version:
+          type: integer
+          format: int64
+          description: Optimistic concurrency version. Send it back unchanged when changing the status.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateContactMessageRequest:
+      type: object
+      required: [subject, message]
+      properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 150
+          pattern: '^.*\S.*$'
+        message:
+          type: string
+          minLength: 1
+          maxLength: 5000
+          pattern: '^[\s\S]*\S[\s\S]*$'
+
+    UpdateContactMessageStatusRequest:
+      type: object
+      required: [status, version]
+      properties:
+        status:
+          $ref: '#/components/schemas/ContactMessageStatus'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+
+    ContactMessagePage:
+      type: object
+      required: [items, page, size, totalItems, totalPages]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactMessageResponse'
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        totalItems:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32

@@ -1,0 +1,53 @@
+name: Contract
+
+on:
+  pull_request:
+    paths:
+      - contract/**
+      - redocly.yaml
+      - .github/workflows/contract.yml
+  push:
+    branches: [main, develop]
+    paths:
+      - contract/**
+      - redocly.yaml
+      - .github/workflows/contract.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - run: npx --yes @redocly/cli@2.54.0 lint contract/openapi.yaml
+
+  breaking-changes:
+    name: Breaking changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - name: Compare with the target branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if ! git show "origin/$BASE_REF:contract/openapi.yaml" > base-openapi.yaml 2>/dev/null; then
+            echo "The target branch has no contract yet; nothing to compare."
+            exit 0
+          fi
+          go run github.com/oasdiff/oasdiff@v1.32.1 breaking base-openapi.yaml contract/openapi.yaml --fail-on ERR

@@ -1,0 +1,17 @@
+# The build context is the repository root. Send only what images need.
+.git
+.github
+docs
+mobile
+**/target
+**/build
+**/.gradle
+**/node_modules
+**/.next
+**/.idea
+**/.vscode
+**/*.iml
+
+# Secrets never enter an image.
+**/.env
+**/.env.*

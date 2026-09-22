@@ -1,0 +1,6 @@
+extends:
+  - recommended
+
+rules:
+  # localhost is the intended server for local development and contract tests.
+  no-server-example.com: off

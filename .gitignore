@@ -1,0 +1,11 @@
+# Secrets (docs/security.md)
+.env
+.env.*
+!.env.example
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

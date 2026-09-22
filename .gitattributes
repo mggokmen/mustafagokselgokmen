@@ -1,0 +1,5 @@
+# Store and check out text files with LF, so the same files work on Windows, in Linux
+# containers and in CI. Windows-only scripts keep CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf

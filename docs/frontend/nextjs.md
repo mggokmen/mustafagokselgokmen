@@ -1,0 +1,122 @@
+# Next.js Standard (`frontend/nextjs/`)
+
+## Stack
+
+- Next.js with the App Router
+- React
+- TypeScript in `strict` mode, with no `any`
+- Tailwind CSS
+- `openapi-typescript` and `openapi-fetch`
+- `openid-client` for Sign in with Google
+- zod
+
+## Backend-for-frontend
+
+```
+Browser --(HttpOnly cookies)--> Next.js server --(Authorization: Bearer)--> Backend
+```
+
+- **The browser never sees tokens and never calls the backend.** Every backend call goes through a
+  Server Component, a Server Action or a Route Handler.
+- **`src/lib/api/api-client.ts` is the only module that creates the `openapi-fetch` client.** It:
+  - is marked `server-only`
+  - reads the access token from cookies
+  - turns ProblemDetail responses into a typed `ApiError`
+- **Components never call `fetch` to get backend data.**
+- **Every environment variable is server-only:** `API_BASE_URL`, `APP_URL`, `GOOGLE_CLIENT_ID`,
+  `GOOGLE_CLIENT_SECRET`. None of them has the `NEXT_PUBLIC_` prefix.
+
+## Layout
+
+```
+src/
+├── app/
+│   ├── (public)/                    public pages: static, no API calls
+│   ├── login/page.tsx               "Sign in with Google"
+│   ├── auth/google/route.ts         starts the OAuth flow
+│   ├── auth/google/callback/route.ts
+│   ├── (app)/layout.tsx             signed-in area
+│   ├── (app)/contact/page.tsx       contact form + the user's own messages
+│   ├── (app)/admin/messages/...     admin views (after the MVP)
+│   ├── error.tsx
+│   └── not-found.tsx
+├── features/contact/                components, actions.ts (Server Actions), schemas.ts (zod)
+├── components/ui/                   shared presentational components
+├── lib/api/                         api-client.ts, api-error.ts, types.ts, schema.d.ts (generated)
+├── lib/auth/                        OIDC client setup, session cookie helpers
+└── proxy.ts                         route protection and token refresh
+```
+
+## Server and client components
+
+- **Components are Server Components by default**, and data is fetched in them.
+- **`"use client"` only for interactivity**: state, effects, event handlers, browser APIs. Client
+  components stay small, sit at the leaves of the component tree, and receive data as props.
+- **Mutations are Server Actions.** An action calls the API client, then calls `revalidatePath` or
+  `redirect`.
+- **Where state lives:**
+  - filters, pagination and sort: the URL (`searchParams`)
+  - local UI state: React state
+  - no global store
+- **No client-side data-fetching library by default.** If one becomes necessary, it calls a Route
+  Handler, never the backend.
+
+## Sign-in
+
+1. **`/login`** links to `/auth/google?returnTo=<path>`.
+2. **`auth/google/route.ts`:**
+   - Uses `openid-client` to create `state`, `nonce` and a PKCE verifier.
+   - Stores them in an `HttpOnly` cookie that lives 10 minutes.
+   - Redirects to Google with the scopes `openid email profile`.
+3. **`auth/google/callback/route.ts`:**
+   - Checks `state`, exchanges the code (client secret + PKCE verifier), and checks `nonce`.
+   - Sends the resulting ID token to `POST /api/v1/auth/google`.
+   - Sets the access and refresh token cookies (`HttpOnly`, `SameSite=Lax`, `Secure` in
+     production) and deletes the temporary cookie.
+   - Redirects to `returnTo`, which must be a relative path.
+4. **`proxy.ts`:**
+   - Redirects to `/login` when a protected route has no session cookie.
+   - Refreshes tokens: when the access token is missing or about to expire and a refresh token
+     exists, it calls `/auth/refresh` and sets the new cookies on the response. It reads `exp` only
+     to decide when to refresh; verifying the token is the backend's job.
+5. **Server Components can't set cookies,** so they never refresh tokens. On a 401 they call
+   `redirect("/login")`.
+6. **Logout** is a Server Action. It calls `/auth/logout`, deletes both cookies, and redirects.
+
+## Contact form
+
+- The contact form submits to a Server Action. The action:
+  1. validates the input with zod
+  2. calls `createContactMessage`
+  3. returns field errors, shown through `useActionState`
+- A 400 response's `errors[]` array is mapped onto the matching form fields.
+- A 429 response shows the retry time from `Retry-After`.
+- The zod schemas mirror the contract's constraints (subject 1–150, message 1–5000, not blank). The
+  server remains the authority.
+- Message content is rendered as plain text only ([security.md](../security.md#xss)).
+
+## Types
+
+API types come only from the generated `schema.d.ts`. They are aliased in `lib/api/types.ts`, for
+example `type ContactMessage = components["schemas"]["ContactMessageResponse"]`.
+
+## Error handling
+
+| `ApiError` | Handling |
+|---|---|
+| 401 | `redirect("/login")` |
+| 404 | `notFound()` |
+| 400 in a Server Action | return field errors to the form |
+| 409 | show a message and reload the current data |
+| 429 | show when the user can try again |
+| Anything else | throw; `error.tsx` renders a generic message, never raw backend text |
+
+## Security headers
+
+`next.config` and `proxy.ts` set the headers listed in [security.md](../security.md#xss), including
+a nonce-based Content-Security-Policy.
+
+## Code generation
+
+`npm run gen:api` runs `openapi-typescript ../../contract/openapi.yaml -o src/lib/api/schema.d.ts`.
+It runs automatically through the `predev` and `prebuild` scripts. The output is gitignored.

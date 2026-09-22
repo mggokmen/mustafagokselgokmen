@@ -1,11 +1,9 @@
 name: Contract
 
 on:
+  # No path filter on pull requests: every pull request reports these checks, so branch protection
+  # can require them (docs/devops.md#branch-protection).
   pull_request:
-    paths:
-      - contract/**
-      - redocly.yaml
-      - .github/workflows/contract.yml
   push:
     branches: [main, develop]
     paths:

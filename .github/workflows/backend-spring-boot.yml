@@ -1,11 +1,9 @@
 name: Backend (Spring Boot)
 
 on:
+  # No path filter on pull requests: every pull request reports these checks, so branch protection
+  # can require them (docs/devops.md#branch-protection).
   pull_request:
-    paths:
-      - backend/spring-boot/**
-      - contract/**
-      - .github/workflows/backend-spring-boot.yml
   push:
     branches: [main, develop]
     paths:

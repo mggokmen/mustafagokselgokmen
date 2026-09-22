@@ -3,7 +3,7 @@
 # Build context is the repository root, because the build reads contract/openapi.yaml:
 #   docker build -f backend/spring-boot/Dockerfile .
 
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace/backend/spring-boot
 
 # Resolve dependencies in their own layer, so it's cached until pom.xml changes.
@@ -22,7 +22,7 @@ RUN --mount=type=cache,target=/root/.m2 \
     && java -Djarmode=tools -jar application.jar extract --layers --destination extracted
 
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 
 # curl is only used by the health check.
 RUN apt-get update \

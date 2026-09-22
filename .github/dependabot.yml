@@ -13,6 +13,7 @@ updates:
       spring-boot:
         patterns: ["org.springframework.boot*"]
 
+  # Java and PostgreSQL major versions are project decisions, not bot updates (docs/devops.md).
   - package-ecosystem: docker
     directory: /backend/spring-boot
     target-branch: develop
@@ -21,6 +22,9 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      - dependency-name: eclipse-temurin
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker-compose
     directory: /
@@ -30,6 +34,9 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

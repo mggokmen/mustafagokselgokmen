@@ -76,11 +76,15 @@ Every error body is a ProblemDetail (RFC 9457) with the content type `applicatio
 
 | `code` | Status |
 |---|---|
-| `VALIDATION_FAILED` | 400 |
+| `VALIDATION_FAILED` | 400: invalid field, parameter or JSON body |
+| `BAD_REQUEST` | Other 4xx that has no specific code |
 | `UNAUTHENTICATED` | 401 |
 | `FORBIDDEN` | 403 |
 | `NOT_FOUND` | 404 |
+| `METHOD_NOT_ALLOWED` | 405, with an `Allow` header |
+| `NOT_ACCEPTABLE` | 406 |
 | `CONFLICT` | 409 |
+| `UNSUPPORTED_MEDIA_TYPE` | 415: the request body isn't `application/json` |
 | `RATE_LIMITED` | 429 |
 | `INTERNAL_ERROR` | 500 |
 
@@ -90,6 +94,11 @@ Every error body is a ProblemDetail (RFC 9457) with the content type `applicatio
   clients.
 - `errors` is present only when `code` is `VALIDATION_FAILED`. Field paths use dot and index
   notation, for example `items[0].name`.
+- `type` is always `about:blank`. The error is identified by `code`.
+- Errors that the server rejects before any application code runs also use this format. Examples:
+  an unsupported HTTP method, or an invalid header.
+- JSON values must have the type the contract declares. For example, `false` is not accepted as a
+  string; the request gets a 400 instead of a silent conversion.
 
 ## Pagination
 

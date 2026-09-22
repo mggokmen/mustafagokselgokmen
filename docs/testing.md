@@ -23,10 +23,13 @@
 
 ## Test identity provider
 
-Sign-in is tested without Google. Automated tests start a local mock OpenID Connect provider, such
-as `mock-oauth2-server`. The provider signs ID tokens for a test `USER` and a test `ADMIN`. The
-backend is pointed at it through `GOOGLE_ISSUERS` and `GOOGLE_JWKS_URI`
-([security.md](security.md#test-identity-provider)).
+Sign-in is tested without Google. The backend is pointed at a local identity provider through
+`GOOGLE_ISSUERS` and `GOOGLE_JWKS_URI` ([security.md](security.md#test-identity-provider)).
+
+| Tests | Identity provider |
+|---|---|
+| Spring Boot integration tests | `TestIdentityProvider`: an in-process RSA key that signs ID tokens, with its key set served by the JDK's HTTP server |
+| Contract tests (any backend) | [`mock-oauth2-server`](https://github.com/navikt/mock-oauth2-server) in Docker. `contract/tests/mock-oidc.json` defines a test `USER`, an `ADMIN` and a user whose email isn't verified. |
 
 This means the backend's real verification code runs in every test. No backend contains a test-only
 login shortcut.
@@ -75,13 +78,14 @@ are **exactly the same for every backend**, with no changes for any particular o
 2. **Breaking-change check:** `oasdiff breaking <develop-version> contract/openapi.yaml`.
    A breaking change fails CI unless it is deliberately versioned (see
    [api.md](api.md#compatibility)).
-3. **Conformance:**
-   `uvx schemathesis run contract/openapi.yaml --url http://localhost:8080`
-   - Run it against a seeded database, with a token issued through the test identity provider.
-   - Schemathesis generates requests from the contract and checks that every response conforms to
-     it.
-4. **Scenarios:**
-   `hurl --test --variable base_url=http://localhost:8080 contract/tests/*.hurl`
+3. **Conformance:** Schemathesis generates requests from the contract, including invalid ones, and
+   checks every response against it: status codes, schemas, content types, authentication and
+   unsupported methods.
+   - `contract/tests/schemathesis_hooks.py` signs in through the mock identity provider, so
+     protected operations are called with a real access token.
+   - Only implemented operations are tested (`--include-tag`, currently `Auth`). The filter widens
+     as features land.
+4. **Scenarios:** `contract/tests/*.hurl`, run with Hurl.
    - These are hand-written HTTP scenarios, stored as plain text, for behavior the schema can't
      express:
      - sign-in through the test identity provider: the user is created on the first sign-in and
@@ -95,6 +99,16 @@ are **exactly the same for every backend**, with no changes for any particular o
      - refresh-token rotation, and revocation of the whole family when an old token is reused
    - The scenarios are deliberately written in no backend's language, so they run unchanged against
      every implementation.
+
+Run steps 3 and 4 with **`contract/run-tests.sh`** (requires Docker). The script:
+
+1. starts an isolated Compose project, layered with `contract/compose.contract.yml`, containing
+   PostgreSQL, the API built from the working tree and the mock identity provider, with no ports on
+   the host
+2. runs Hurl, then Schemathesis
+3. removes the project, printing the API log on failure
+
+CI runs the same script in the `Contract tests` job.
 
 ## Continuous integration
 

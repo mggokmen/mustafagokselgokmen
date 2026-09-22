@@ -65,8 +65,11 @@ environment-specific is baked into an image.
 
 ## Continuous integration
 
-Workflows live in `.github/workflows/`. Each one runs on pull requests and on pushes to `main` and
-`develop`, and only when the files it covers change (path filters).
+Workflows live in `.github/workflows/`.
+- **Pull requests** run every workflow, whichever files changed. That way each required check
+  always reports a result (see [Branch protection](#branch-protection)).
+- **Pushes to `main` and `develop`** run a workflow only when the files it covers change (path
+  filters).
 
 | Workflow | Stages |
 |---|---|
@@ -89,8 +92,23 @@ Path filters don't trigger on a branch's first push. The contract and backend wo
 started manually (`workflow_dispatch`), for example with
 `gh workflow run backend-spring-boot.yml --ref develop`.
 
-Every check must pass before merging ([git.md](git.md)). In branch protection for `main` and
-`develop`, configure these checks as required status checks.
+Every check must pass before merging ([git.md](git.md)).
+
+## Branch protection
+
+`main` and `develop` are protected with these settings:
+
+| Setting | Value |
+|---|---|
+| Changes only through pull requests | yes; 0 required approvals, because there is a single maintainer |
+| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test` and `Docker image and vulnerability scan` (Backend)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
+| Branch must be up to date before merging | yes |
+| Conversations must be resolved | yes |
+| Force pushes and deletion | blocked |
+| Rules apply to administrators | yes |
+
+When a workflow or job is added or renamed, update this list and the branch protection settings in
+the same pull request.
 
 ## Continuous delivery
 

@@ -85,6 +85,10 @@ What is not in CI yet:
   workflow once the endpoints are implemented.
 - **Web, Android and iOS workflows** are added when those applications are scaffolded.
 
+Path filters don't trigger on a branch's first push. The contract and backend workflows can also be
+started manually (`workflow_dispatch`), for example with
+`gh workflow run backend-spring-boot.yml --ref develop`.
+
 Every check must pass before merging ([git.md](git.md)). In branch protection for `main` and
 `develop`, configure these checks as required status checks.
 
@@ -110,6 +114,9 @@ image is published:
 - **Tools** used in workflows are pinned to a version (`@redocly/cli@2.54.0`, `oasdiff@v1.32.1`).
 - **Dependabot** checks Maven, Docker, Docker Compose and GitHub Actions weekly. It opens pull
   requests against `develop`, using Conventional Commit messages.
+- **Major versions of Java (`eclipse-temurin`) and PostgreSQL** are ignored by Dependabot. Moving
+  to a new major version is a project decision that changes the build, the images, CI and the
+  documentation together.
 - **Vulnerability gates:**
   - Trivy scans images and fails on CRITICAL or HIGH findings that have a fix available.
   - CodeQL scans the code.

@@ -12,6 +12,8 @@ on:
       - contract/**
       - redocly.yaml
       - .github/workflows/contract.yml
+  # Path filters skip a branch's first push; this allows a manual run.
+  workflow_dispatch:
 
 permissions:
   contents: read

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.mustafagokselgokmen</groupId>
 	<artifactId>api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>api</name>
 	<description>mustafagokselgokmen REST API (Spring Boot implementation)</description>
 	<licenses>
@@ -22,6 +22,9 @@
 
 	<properties>
 		<java.version>21</java.version>
+		<!-- Spring Boot 4.1.1 manages Tomcat 11.0.24, which has CVE-2026-65182, CVE-2026-65905 and
+		     CVE-2026-68525 (critical). Remove this override once the parent manages 11.0.26 or later. -->
+		<tomcat.version>11.0.26</tomcat.version>
 		<contract.spec>${project.basedir}/../../contract/openapi.yaml</contract.spec>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
 		<spotless.version>3.10.2</spotless.version>

@@ -9,6 +9,7 @@
 | `feature/<description>` | New functionality | `develop` | `develop` |
 | `fix/<description>` | Bug fixes | `develop` | `develop` |
 | `refactor/<description>` | Changes to structure without changes in behavior | `develop` | `develop` |
+| `release/<version>` | Sets the release version before a release | `develop` | `develop` |
 
 - Branch names are short kebab-case descriptions, for example `feature/contact-form` or
   `fix/refresh-token-reuse`.
@@ -72,3 +73,14 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
   - tagged `vMAJOR.MINOR.PATCH` according to [SemVer](https://semver.org/)
   - a breaking API change increments MAJOR
 - Branches are deleted after they are merged.
+
+## Releasing
+
+1. On a `release/X.Y.Z` branch, set the application versions to `X.Y.Z` (for example
+   `backend/spring-boot/pom.xml`), then merge it into `develop`.
+2. Open a pull request from `develop` into `main`. Merge it with a merge commit once CI is green.
+3. After CI on `main` is green, tag the merge commit `vX.Y.Z` and push the tag. `release.yml`
+   publishes the images ([devops.md](devops.md#continuous-delivery)).
+4. Create a GitHub Release for the tag. Its notes state what the version contains and what it
+   doesn't contain yet.
+5. On `develop`, move the versions to the next `-SNAPSHOT`.

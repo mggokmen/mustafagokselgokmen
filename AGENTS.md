@@ -93,6 +93,7 @@ running anything.
 | Run the backend from source | `cd backend/spring-boot && ./mvnw spring-boot:run` |
 | Format Java code | `cd backend/spring-boot && ./mvnw spotless:apply` |
 | Lint the API contract | `npx @redocly/cli lint contract/openapi.yaml` |
+| Run the contract tests (Hurl + Schemathesis, in Docker) | `contract/run-tests.sh` |
 
 The API listens on `http://localhost:8080`. Its health endpoint is
 `http://localhost:8080/actuator/health`.

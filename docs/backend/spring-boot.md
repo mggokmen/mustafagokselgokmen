@@ -13,7 +13,7 @@ and [testing.md](../testing.md).
 - Spring Data JPA (Hibernate), PostgreSQL, Flyway, Bean Validation
 - Spring Security with OAuth2 Resource Server (Nimbus JOSE for JWT)
 - openapi-generator-maven-plugin
-- Bucket4j for rate limiting
+- Bucket4j for rate limiting (planned, in a follow-up to the identity feature)
 - No Lombok: the contract generates the API models, and there are only a few entities.
 
 ## Package layout (bounded contexts)
@@ -29,8 +29,11 @@ src/main/java/com/mustafagokselgokmen/api/
 │   ├── AuthService.java               Google sign-in, refresh, logout
 │   ├── GoogleIdTokenVerifier.java     verifies Google ID tokens
 │   ├── TokenService.java              issues access tokens and refresh tokens
+│   ├── TokenConfig.java               access token encoder and decoder (HS256)
 │   ├── RefreshToken.java              @Entity
-│   └── RefreshTokenRepository.java
+│   ├── RefreshTokenRepository.java
+│   ├── IdentityProperties.java        validated configuration (JWT_SECRET, GOOGLE_*, ADMIN_EMAILS)
+│   └── AuthenticatedUser.java         user ID of the current request
 ├── contact/                           contact messages
 │   ├── ContactMessageController.java  implements the generated ContactMessagesApi
 │   ├── ContactMessageService.java
@@ -39,8 +42,10 @@ src/main/java/com/mustafagokselgokmen/api/
 │   ├── ContactMessageStatus.java      enum with the allowed transitions
 │   └── ContactMessageMapper.java      entity <-> generated models
 └── common/
-    ├── error/                         GlobalExceptionHandler, domain exceptions
-    └── config/                        SecurityConfig, JPA auditing, rate limiting
+    ├── error/                         GlobalExceptionHandler, ProblemErrorController,
+    │                                  SecurityProblemHandler, ErrorCode
+    ├── persistence/                   AuditedEntity (UUID v7 id, audit timestamps)
+    └── config/                        SecurityConfig, JacksonConfig, PersistenceConfig
 ```
 
 This is a lightweight use of DDD: bounded contexts and domain rules, without extra layers.
@@ -109,8 +114,10 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 
 ## Error handling
 
-A single `@RestControllerAdvice` extending `ResponseEntityExceptionHandler` writes the ProblemDetail
-format from [api.md](../api.md#errors):
+A single `@RestControllerAdvice` extending `ResponseEntityExceptionHandler` writes the error format
+from [api.md](../api.md#errors). Every error body is the **generated `Problem` model**, so its shape
+comes from the contract itself. Spring's own `ProblemDetail`s are converted in
+`createResponseEntity`.
 
 | Exception | Status | `code` |
 |---|---|---|
@@ -121,9 +128,16 @@ format from [api.md](../api.md#errors):
 | `RateLimitedException` | 429 | `RATE_LIMITED`, with `Retry-After` |
 | Any other exception | 500 | `INTERNAL_ERROR`, logged with its stack trace; the client gets a generic `detail` |
 
-Spring Security rejects unauthenticated and unauthorized requests before they reach the advice. A
-custom `AuthenticationEntryPoint` (401, `UNAUTHENTICATED`) and a custom `AccessDeniedHandler` (403,
-`FORBIDDEN`) write the same ProblemDetail format.
+Errors raised outside Spring MVC reach the same format by other routes:
+
+| Where the error comes from | How it reaches the `Problem` format |
+|---|---|
+| Spring Security, for unauthenticated and unauthorized requests | `SecurityProblemHandler`, the `AuthenticationEntryPoint` and `AccessDeniedHandler`, passes the exception to the advice. 401 responses include `WWW-Authenticate: Bearer`. |
+| The servlet container, for example a rejected method | `ProblemErrorController` replaces Spring Boot's default `/error` response. Error dispatches are permitted in the security chain, so a 405 isn't turned into a 401. |
+
+JSON handling is strict:
+- Optional fields are omitted instead of being sent as `null` (`default-property-inclusion: non_null`).
+- A value of the wrong type is rejected with 400 instead of being converted (`JacksonConfig`).
 
 ## Security
 

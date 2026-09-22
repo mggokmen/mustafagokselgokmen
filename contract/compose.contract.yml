@@ -1,0 +1,57 @@
+# Contract test stack, layered on docker-compose.yml. Run it with contract/run-tests.sh.
+# The API accepts ID tokens from a mock OpenID Connect provider instead of Google, and nothing is
+# published on the host, so it can run next to the development stack.
+services:
+  postgres:
+    ports: !reset []
+
+  api:
+    ports: !reset []
+    environment:
+      GOOGLE_ISSUERS: http://mock-oidc:8080/google
+      GOOGLE_JWKS_URI: http://mock-oidc:8080/google/jwks
+    depends_on:
+      mock-oidc:
+        condition: service_started
+
+  mock-oidc:
+    image: ghcr.io/navikt/mock-oauth2-server:6.0.2
+    environment:
+      JSON_CONFIG_PATH: /config/mock-oidc.json
+    volumes:
+      - ./contract/tests/mock-oidc.json:/config/mock-oidc.json:ro
+
+  hurl:
+    image: ghcr.io/orange-opensource/hurl:8.0.1
+    profiles: [tools]
+    volumes:
+      - ./contract:/contract:ro
+    command:
+      - --test
+      - --glob
+      - /contract/tests/*.hurl
+      - --variable
+      - api=http://api:8080
+      - --variable
+      - idp=http://mock-oidc:8080/google
+
+  schemathesis:
+    image: schemathesis/schemathesis:v4.27.5
+    profiles: [tools]
+    volumes:
+      - ./contract:/contract:ro
+    environment:
+      PYTHONPATH: /contract/tests
+      SCHEMATHESIS_HOOKS: schemathesis_hooks
+      API_URL: http://api:8080
+      IDP_URL: http://mock-oidc:8080/google
+    # Only operations that are implemented; widen the filter as features land (docs/testing.md).
+    command:
+      - run
+      - /contract/openapi.yaml
+      - --url
+      - http://api:8080
+      - --include-tag
+      - Auth
+      - --checks
+      - all

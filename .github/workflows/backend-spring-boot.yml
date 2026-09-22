@@ -66,3 +66,13 @@ jobs:
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"
+
+  contract-tests:
+    name: Contract tests
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Hurl scenarios and Schemathesis against the API built from this commit, with a mock
+      # identity provider instead of Google (docs/testing.md#contract-tests).
+      - run: bash contract/run-tests.sh

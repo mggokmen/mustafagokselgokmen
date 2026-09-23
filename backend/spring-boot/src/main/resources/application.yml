@@ -18,6 +18,14 @@ spring:
       ddl-auto: validate
 
 app:
+  # Requests per client IP, counted by this instance (docs/security.md#rate-limiting).
+  rate-limit:
+    sign-in:
+      requests: ${RATE_LIMIT_SIGN_IN_REQUESTS:10}
+      per: 1m
+    refresh:
+      requests: ${RATE_LIMIT_REFRESH_REQUESTS:30}
+      per: 1m
   identity:
     jwt-secret: ${JWT_SECRET}
     access-token-ttl: 15m

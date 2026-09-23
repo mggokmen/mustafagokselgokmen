@@ -13,7 +13,7 @@ and [testing.md](../testing.md).
 - Spring Data JPA (Hibernate), PostgreSQL, Flyway, Bean Validation
 - Spring Security with OAuth2 Resource Server (Nimbus JOSE for JWT)
 - openapi-generator-maven-plugin
-- Bucket4j for rate limiting (planned, in a follow-up to the identity feature)
+- Bucket4j and Caffeine for rate limiting
 - No Lombok: the contract generates the API models, and there are only a few entities.
 
 ## Package layout (bounded contexts)
@@ -166,8 +166,14 @@ JSON handling is strict:
 - **Authorization:**
   - `SecurityFilterChain` declares which routes are public and which require authentication.
   - Role rules and ownership rules use `@PreAuthorize` on service methods.
-- **Rate limiting:** Bucket4j buckets kept in memory (the backend runs as a single instance), keyed
-  by IP for `/auth` endpoints and by user ID for sending messages.
+- **Rate limiting** (`common/ratelimit`):
+  - Bucket4j token buckets, held in a Caffeine cache that expires unused keys, so memory can't grow
+    without bound.
+  - A `HandlerInterceptor` counts the request before the controller runs and throws
+    `RateLimitedException`, which the advice turns into 429 with `Retry-After`.
+  - Bucket4j reads time through the application's `Clock` bean, so tests move the window instead of
+    sleeping.
+  - The limits and their consequences are in [security.md](../security.md#rate-limiting).
 
 ## Configuration
 

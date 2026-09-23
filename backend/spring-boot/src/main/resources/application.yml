@@ -18,6 +18,12 @@ spring:
       ddl-auto: validate
 
 app:
+  # Events are written with the change that produced them and published from here (ADR-008).
+  outbox:
+    enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
+    batch-size: 100
+    poll-interval: 1s
+
   # Requests per client IP, counted by this instance (docs/security.md#rate-limiting).
   rate-limit:
     sign-in:

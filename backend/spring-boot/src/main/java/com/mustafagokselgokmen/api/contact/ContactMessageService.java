@@ -1,6 +1,7 @@
 package com.mustafagokselgokmen.api.contact;
 
 import com.mustafagokselgokmen.api.common.error.NotFoundException;
+import com.mustafagokselgokmen.api.common.outbox.OutboxWriter;
 import com.mustafagokselgokmen.api.common.ratelimit.RateLimiter;
 import com.mustafagokselgokmen.api.common.ratelimit.RateLimiter.LimitName;
 import com.mustafagokselgokmen.api.generated.model.ContactMessagePage;
@@ -24,15 +25,22 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 class ContactMessageService {
 
+  private static final String AGGREGATE_TYPE = "ContactMessage";
+
   private final ContactMessageRepository messages;
   private final UserService users;
   private final RateLimiter rateLimiter;
+  private final OutboxWriter outbox;
 
   ContactMessageService(
-      ContactMessageRepository messages, UserService users, RateLimiter rateLimiter) {
+      ContactMessageRepository messages,
+      UserService users,
+      RateLimiter rateLimiter,
+      OutboxWriter outbox) {
     this.messages = messages;
     this.users = users;
     this.rateLimiter = rateLimiter;
+    this.outbox = outbox;
   }
 
   @Transactional
@@ -46,6 +54,17 @@ class ContactMessageService {
                 author,
                 ContactMessageText.storable(request.getSubject()),
                 ContactMessageText.storable(request.getMessage())));
+    // Same transaction as the message: either both are stored, or neither is (ADR-008).
+    outbox.record(
+        AGGREGATE_TYPE,
+        message.getId(),
+        "ContactMessageCreated",
+        new ContactMessageCreated(
+            message.getId(),
+            author.getId(),
+            author.getEmail(),
+            message.getSubject(),
+            message.getCreatedAt()));
     return ContactMessageMapper.toResponse(message);
   }
 

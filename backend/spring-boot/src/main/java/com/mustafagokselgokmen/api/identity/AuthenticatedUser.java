@@ -17,4 +17,12 @@ public final class AuthenticatedUser {
     }
     throw new InvalidTokenException("Request is not authenticated with an access token");
   }
+
+  /** Whether the current request carries the ADMIN role. */
+  public static boolean isAdmin() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication != null
+        && authentication.getAuthorities().stream()
+            .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
+  }
 }

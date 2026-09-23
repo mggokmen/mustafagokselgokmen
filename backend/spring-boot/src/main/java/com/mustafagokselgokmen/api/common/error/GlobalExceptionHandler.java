@@ -6,9 +6,11 @@ import com.mustafagokselgokmen.api.generated.model.Problem;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
+import org.apache.tomcat.util.http.InvalidParameterException;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -66,6 +68,57 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     return Problems.respond(HttpStatus.FORBIDDEN, new HttpHeaders(), problem);
   }
 
+  /**
+   * A malformed query string, for example a parameter without a name, is rejected by the servlet
+   * container. It is the client's mistake, so it is a 400 rather than a server error.
+   */
+  @ExceptionHandler(InvalidParameterException.class)
+  public ResponseEntity<Object> handleInvalidParameter(
+      InvalidParameterException ex, HttpServletRequest request) {
+    Problem problem =
+        Problems.of(
+                HttpStatus.BAD_REQUEST,
+                "Malformed request",
+                "The query string could not be parsed.",
+                ErrorCode.VALIDATION_FAILED)
+            .instance(request.getRequestURI());
+    return Problems.respond(HttpStatus.BAD_REQUEST, new HttpHeaders(), problem);
+  }
+
+  @ExceptionHandler(ValidationFailedException.class)
+  public ResponseEntity<Object> handleValidationFailed(
+      ValidationFailedException ex, HttpServletRequest request) {
+    Problem problem =
+        Problems.validation(List.of(new FieldError(ex.getField(), ex.getMessage())))
+            .instance(request.getRequestURI());
+    return Problems.respond(HttpStatus.BAD_REQUEST, new HttpHeaders(), problem);
+  }
+
+  @ExceptionHandler(NotFoundException.class)
+  public ResponseEntity<Object> handleNotFound(NotFoundException ex, HttpServletRequest request) {
+    Problem problem =
+        Problems.of(
+                HttpStatus.NOT_FOUND,
+                "Not found",
+                "The resource doesn't exist, or you don't have access to it.",
+                ErrorCode.NOT_FOUND)
+            .instance(request.getRequestURI());
+    return Problems.respond(HttpStatus.NOT_FOUND, new HttpHeaders(), problem);
+  }
+
+  /** Both a stale version and a move the domain rejects are conflicts with the current state. */
+  @ExceptionHandler({ConflictException.class, OptimisticLockingFailureException.class})
+  public ResponseEntity<Object> handleConflict(Exception ex, HttpServletRequest request) {
+    String detail =
+        ex instanceof ConflictException conflict
+            ? conflict.getMessage()
+            : "The resource was changed by someone else; reload it and try again";
+    Problem problem =
+        Problems.of(HttpStatus.CONFLICT, "Conflict", detail, ErrorCode.CONFLICT)
+            .instance(request.getRequestURI());
+    return Problems.respond(HttpStatus.CONFLICT, new HttpHeaders(), problem);
+  }
+
   @ExceptionHandler(RateLimitedException.class)
   public ResponseEntity<Object> handleRateLimited(
       RateLimitedException ex, HttpServletRequest request) {
@@ -87,7 +140,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       ConstraintViolationException ex, HttpServletRequest request) {
     List<FieldError> errors =
         ex.getConstraintViolations().stream()
-            .map(v -> new FieldError(v.getPropertyPath().toString(), v.getMessage()))
+            .map(v -> new FieldError(parameterName(v.getPropertyPath().toString()), v.getMessage()))
             .toList();
     return Problems.respond(
         HttpStatus.BAD_REQUEST,
@@ -173,6 +226,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
       problem.setInstance(servletRequest.getRequest().getRequestURI());
     }
     return Problems.respond(statusCode, headers, problem);
+  }
+
+  /**
+   * Method validation reports paths like {@code listContactMessages.sort}; the contract names the
+   * parameter, so only the last segment is reported.
+   */
+  private static String parameterName(String propertyPath) {
+    int lastDot = propertyPath.lastIndexOf('.');
+    return lastDot < 0 ? propertyPath : propertyPath.substring(lastDot + 1);
   }
 
   private static String message(@Nullable String message) {

@@ -38,8 +38,10 @@ src/main/java/com/mustafagokselgokmen/api/
 │   ├── ContactMessageController.java  implements the generated ContactMessagesApi
 │   ├── ContactMessageService.java
 │   ├── ContactMessageRepository.java
+│   ├── ContactMessageSpecifications.java  filters applied in the query
 │   ├── ContactMessage.java            @Entity that enforces its own status transitions
 │   ├── ContactMessageStatus.java      enum with the allowed transitions
+│   ├── ContactMessageText.java        makes request text safe to store
 │   └── ContactMessageMapper.java      entity <-> generated models
 └── common/
     ├── error/                         GlobalExceptionHandler, ProblemErrorController,
@@ -103,6 +105,9 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 - **Timestamps:** `Instant`, with `createdAt` and `updatedAt` filled in by JPA auditing.
 - **Versioning:** `ContactMessage` has `@Version`. Before changing the status, the service compares
   the `version` in the request with the entity's version. A mismatch throws `ConflictException`.
+  The service flushes before mapping the response, so the client gets the version it must send next.
+- **Concurrent first sign-ins** of the same person are serialized with a PostgreSQL advisory lock;
+  otherwise both requests insert the user and the second one fails on the unique index.
 - **Associations** are `LAZY`. No cascades.
 
 ## Validation

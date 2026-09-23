@@ -34,14 +34,23 @@ public final class ApiClient {
   }
 
   public Response post(String path, String json) {
-    return Response.of(
-        client
-            .post()
-            .uri(path)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(json)
-            .retrieve()
-            .toEntity(String.class));
+    return post(path, json, null);
+  }
+
+  public Response post(String path, String json, String accessToken) {
+    return body(client.post().uri(path), json, accessToken);
+  }
+
+  public Response put(String path, String json, String accessToken) {
+    return body(client.put().uri(path), json, accessToken);
+  }
+
+  private Response body(RestClient.RequestBodySpec request, String json, String accessToken) {
+    request.contentType(MediaType.APPLICATION_JSON);
+    if (accessToken != null) {
+      request.header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+    }
+    return Response.of(request.body(json).retrieve().toEntity(String.class));
   }
 
   public record Response(int status, HttpHeaders headers, String body) {

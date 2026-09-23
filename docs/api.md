@@ -99,6 +99,8 @@ Every error body is a ProblemDetail (RFC 9457) with the content type `applicatio
   an unsupported HTTP method, or an invalid header.
 - JSON values must have the type the contract declares. For example, `false` is not accepted as a
   string; the request gets a 400 instead of a silent conversion.
+- Text that the storage layer can't hold, currently only NUL characters, is removed rather than
+  rejected, because the contract's schema accepts any string. Each field documents this.
 
 ## Pagination
 

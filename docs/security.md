@@ -79,7 +79,7 @@ tokens, which the client uses for every later request.
 |---|---|---|
 | `POST /auth/google` | 10 requests per minute per client | implemented |
 | `POST /auth/refresh` | 30 requests per minute per client | implemented |
-| `POST /contact-messages` | 5 messages per user per hour | with the contact feature |
+| `POST /contact-messages` | 5 messages per user per hour, keyed by user | implemented |
 
 - Exceeding a limit returns 429 with the `RATE_LIMITED` code and a `Retry-After` header in seconds.
 - Limits are configurable (`RATE_LIMIT_SIGN_IN_REQUESTS`, `RATE_LIMIT_REFRESH_REQUESTS`).

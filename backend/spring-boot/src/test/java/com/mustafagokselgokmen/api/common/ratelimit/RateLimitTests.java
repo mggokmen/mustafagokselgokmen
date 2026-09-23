@@ -30,7 +30,9 @@ import org.springframework.test.context.TestPropertySource;
       "app.rate-limit.sign-in.requests=3",
       "app.rate-limit.sign-in.per=1m",
       "app.rate-limit.refresh.requests=2",
-      "app.rate-limit.refresh.per=30s"
+      "app.rate-limit.refresh.per=30s",
+      "app.rate-limit.contact-message.requests=2",
+      "app.rate-limit.contact-message.per=1h"
     })
 class RateLimitTests {
 
@@ -90,9 +92,35 @@ class RateLimitTests {
     assertThat(signIn().status()).isEqualTo(200);
   }
 
+  @Test
+  void contactMessagesAreCountedPerUserNotPerAddress() {
+    String author = accessToken();
+    for (int attempt = 1; attempt <= properties.contactMessage().requests(); attempt++) {
+      assertThat(sendMessage(author).status()).as("message %d", attempt).isEqualTo(201);
+    }
+
+    Response limited = sendMessage(author);
+
+    assertThat(limited.status()).isEqualTo(429);
+    assertThat(limited.<String>json("$.code")).isEqualTo("RATE_LIMITED");
+    // Another user from the same address still has their own allowance.
+    assertThat(sendMessage(accessToken()).status()).isEqualTo(201);
+  }
+
   private Response signIn() {
     String idToken = provider.idToken(claims -> claims);
     return api.post("/api/v1/auth/google", "{\"idToken\":\"" + idToken + "\"}");
+  }
+
+  private String accessToken() {
+    return signIn().json("$.accessToken");
+  }
+
+  private Response sendMessage(String accessToken) {
+    return api.post(
+        "/api/v1/contact-messages",
+        "{\"subject\":\"Rate limit\",\"message\":\"Counting messages\"}",
+        accessToken);
   }
 
   private Response refresh() {

@@ -8,6 +8,7 @@ import io.github.bucket4j.TimeMeter;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
 /**
@@ -40,9 +41,10 @@ public class RateLimiter {
           }
         };
     Duration longestWindow =
-        properties.signIn().per().compareTo(properties.refresh().per()) >= 0
-            ? properties.signIn().per()
-            : properties.refresh().per();
+        Stream.of(properties.signIn(), properties.refresh(), properties.contactMessage())
+            .map(RateLimitProperties.Limit::per)
+            .max(Duration::compareTo)
+            .orElseThrow();
     this.buckets =
         Caffeine.newBuilder()
             .expireAfterAccess(longestWindow.multipliedBy(2))
@@ -55,7 +57,7 @@ public class RateLimiter {
    *
    * @throws RateLimitedException when the client has no requests left
    */
-  void consume(LimitName limit, String client) {
+  public void consume(LimitName limit, String client) {
     Bucket bucket = buckets.get(limit.name() + ':' + client, key -> newBucket(limitFor(limit)));
     ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
     if (!probe.isConsumed()) {
@@ -67,6 +69,7 @@ public class RateLimiter {
     return switch (limit) {
       case SIGN_IN -> properties.signIn();
       case REFRESH -> properties.refresh();
+      case CONTACT_MESSAGE -> properties.contactMessage();
     };
   }
 
@@ -81,9 +84,11 @@ public class RateLimiter {
         .build();
   }
 
-  /** The limits that exist today. */
-  enum LimitName {
+  /** The limits that exist today. The client is an IP address, except where noted. */
+  public enum LimitName {
     SIGN_IN,
-    REFRESH
+    REFRESH,
+    /** Keyed by user, because sending messages requires an authenticated user. */
+    CONTACT_MESSAGE
   }
 }

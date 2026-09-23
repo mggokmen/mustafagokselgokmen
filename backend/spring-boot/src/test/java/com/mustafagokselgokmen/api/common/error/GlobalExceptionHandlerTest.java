@@ -32,6 +32,18 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void aMalformedQueryStringBecomes400() {
+    ResponseEntity<Object> response =
+        handler.handleInvalidParameter(
+            new org.apache.tomcat.util.http.InvalidParameterException("bad chunk"), request);
+
+    Problem problem = (Problem) response.getBody();
+    assertThat(response.getStatusCode().value()).isEqualTo(400);
+    assertThat(problem).isNotNull();
+    assertThat(problem.getCode()).isEqualTo("VALIDATION_FAILED");
+  }
+
+  @Test
   void unexpectedErrorBecomes500ProblemWithoutInternals() {
     ResponseEntity<Object> response =
         handler.handleUnexpected(new IllegalStateException("database password is wrong"), request);

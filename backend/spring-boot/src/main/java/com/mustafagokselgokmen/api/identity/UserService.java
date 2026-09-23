@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
-class UserService {
+public class UserService {
 
   private final UserRepository users;
   private final Set<String> adminEmails;
@@ -24,6 +24,7 @@ class UserService {
    */
   @Transactional
   User signIn(GoogleIdentity identity) {
+    users.lockSignIn(identity.subject().hashCode());
     User user =
         users
             .findByGoogleSubject(identity.subject())
@@ -38,7 +39,8 @@ class UserService {
     return users.save(user);
   }
 
-  User get(UUID id) {
+  /** Used by other bounded contexts that need the user of the current request. */
+  public User get(UUID id) {
     return users.findById(id).orElseThrow(() -> new InvalidTokenException("User doesn't exist"));
   }
 }

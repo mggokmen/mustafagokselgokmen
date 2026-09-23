@@ -26,6 +26,10 @@ app:
     refresh:
       requests: ${RATE_LIMIT_REFRESH_REQUESTS:30}
       per: 1m
+    # Keyed by user, not by IP.
+    contact-message:
+      requests: ${RATE_LIMIT_CONTACT_MESSAGE_REQUESTS:5}
+      per: 1h
   identity:
     jwt-secret: ${JWT_SECRET}
     access-token-ttl: 15m

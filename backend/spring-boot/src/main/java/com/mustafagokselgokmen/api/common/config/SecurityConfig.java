@@ -5,6 +5,7 @@ import jakarta.servlet.DispatcherType;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -14,6 +15,7 @@ import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
 
 @Configuration(proxyBeanMethods = false)
+@EnableMethodSecurity // for @PreAuthorize on service methods (docs/security.md#authorization)
 class SecurityConfig {
 
   /** Operations with {@code security: []} in the contract. */

@@ -86,6 +86,9 @@ are **exactly the same for every backend**, with no changes for any particular o
    unsupported methods.
    - `contract/tests/schemathesis_hooks.py` signs in through the mock identity provider, so
      protected operations are called with a real access token.
+   - **Each run explores different inputs.** A change that passed on a pull request can still fail
+     on `develop`, because that run generated something new. That is the tool doing its job: fix
+     forward, with a regression test for the case it found.
    - Every operation in the contract is tested. While a feature is unimplemented, restrict the run
      with `--include-tag`, so unimplemented operations don't report undocumented 404s.
 4. **Scenarios:** `contract/tests/*.hurl`, run with Hurl.

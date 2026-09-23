@@ -7,6 +7,7 @@ import com.mustafagokselgokmen.api.generated.model.CreateContactMessageRequest;
 import com.mustafagokselgokmen.api.generated.model.UpdateContactMessageStatusRequest;
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,10 +36,14 @@ class ContactMessageController implements ContactMessagesApi {
       String sort,
       List<com.mustafagokselgokmen.api.generated.model.ContactMessageStatus> status,
       String q) {
+    // An empty "?status=" carries no value: it means no filter, not a filter on nothing.
     List<ContactMessageStatus> statuses =
         status == null
             ? null
-            : status.stream().map(value -> ContactMessageStatus.valueOf(value.getValue())).toList();
+            : status.stream()
+                .filter(Objects::nonNull)
+                .map(value -> ContactMessageStatus.valueOf(value.getValue()))
+                .toList();
     return ResponseEntity.ok(contactMessages.list(page, size, sort, statuses, q));
   }
 

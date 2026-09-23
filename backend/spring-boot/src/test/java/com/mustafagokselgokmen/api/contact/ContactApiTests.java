@@ -156,6 +156,14 @@ class ContactApiTests {
   }
 
   @Test
+  void emptyFilterParametersAreIgnored() {
+    // A client that sends "?sort=&status=" means "no preference", not an error.
+    Response response = api.get(MESSAGES + "?sort=&status=&status=", signInAsUser());
+
+    assertThat(response.status()).isEqualTo(200);
+  }
+
+  @Test
   void anUnsupportedSortFieldIsRejectedWith400() {
     Response response = api.get(MESSAGES + "?sort=message,asc", signInAsUser());
 

@@ -26,6 +26,7 @@
 		     CVE-2026-68525 (critical). Remove this override once the parent manages 11.0.26 or later. -->
 		<tomcat.version>11.0.26</tomcat.version>
 		<contract.spec>${project.basedir}/../../contract/openapi.yaml</contract.spec>
+		<bucket4j.version>8.20.0</bucket4j.version>
 		<openapi-generator.version>7.25.0</openapi-generator.version>
 		<spotless.version>3.10.2</spotless.version>
 		<google-java-format.version>1.36.1</google-java-format.version>
@@ -63,6 +64,16 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<!-- Rate limiting: token buckets, kept in a cache that expires unused keys. -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j_jdk17-core</artifactId>
+			<version>${bucket4j.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
 		</dependency>
 
 		<dependency>

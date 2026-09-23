@@ -75,13 +75,20 @@ tokens, which the client uses for every later request.
 
 ## Rate limiting
 
-| Endpoint | Limit |
-|---|---|
-| `POST /auth/google` | 10 requests per minute per IP |
-| `POST /auth/refresh` | 30 requests per minute per IP |
-| `POST /contact-messages` | 5 messages per user per hour |
+| Endpoint | Limit | Status |
+|---|---|---|
+| `POST /auth/google` | 10 requests per minute per client | implemented |
+| `POST /auth/refresh` | 30 requests per minute per client | implemented |
+| `POST /contact-messages` | 5 messages per user per hour | with the contact feature |
 
-- Exceeding a limit returns 429 with the `RATE_LIMITED` code and a `Retry-After` header.
+- Exceeding a limit returns 429 with the `RATE_LIMITED` code and a `Retry-After` header in seconds.
+- Limits are configurable (`RATE_LIMIT_SIGN_IN_REQUESTS`, `RATE_LIMIT_REFRESH_REQUESTS`).
+- A client is its IP address, so a deployment behind a proxy or load balancer has to pass the real
+  address through. Otherwise every request looks like one client.
+- **Counting is local to the application instance.** Running several instances behind a load
+  balancer needs a shared store, such as Redis, otherwise each instance allows the full limit on its
+  own. Introducing it will need its own ADR, like every other piece of infrastructure
+  ([ADR-007](decisions/007-containers-and-ci-cd.md)).
 - General API limits are added when a real need appears.
 
 ## Web sign-in flow

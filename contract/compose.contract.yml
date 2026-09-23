@@ -10,6 +10,10 @@ services:
     environment:
       GOOGLE_ISSUERS: http://mock-oidc:8080/google
       GOOGLE_JWKS_URI: http://mock-oidc:8080/google/jwks
+      # Schemathesis sends hundreds of requests from one address. Rate limiting itself is covered
+      # by the backend's integration tests (docs/testing.md).
+      RATE_LIMIT_SIGN_IN_REQUESTS: "100000"
+      RATE_LIMIT_REFRESH_REQUESTS: "100000"
     depends_on:
       mock-oidc:
         condition: service_started

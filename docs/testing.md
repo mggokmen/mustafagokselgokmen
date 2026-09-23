@@ -60,6 +60,9 @@ login shortcut.
 
 - **ViewModel tests** check the sequence of UI states for success, for each error type, and for a
   retry.
+- **Rate limits** are verified by backend integration tests, which set low limits of their own and
+  move the clock to reach the next window. The contract stack raises the limits instead, so the
+  hundreds of requests Schemathesis generates aren't rejected with 429.
 - **Token-refresh tests** prove two things:
   - several concurrent 401 responses trigger exactly one refresh
   - a failed refresh logs the user out

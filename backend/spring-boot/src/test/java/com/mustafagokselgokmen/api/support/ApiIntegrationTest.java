@@ -14,5 +14,9 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Import({TestcontainersConfiguration.class, IdentityTestConfiguration.class})
+@Import({
+  TestcontainersConfiguration.class,
+  IdentityTestConfiguration.class,
+  RelaxedRateLimitsConfiguration.class
+})
 public @interface ApiIntegrationTest {}

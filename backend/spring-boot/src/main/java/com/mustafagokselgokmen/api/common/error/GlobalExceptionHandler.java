@@ -1,5 +1,6 @@
 package com.mustafagokselgokmen.api.common.error;
 
+import com.mustafagokselgokmen.api.common.ratelimit.RateLimitedException;
 import com.mustafagokselgokmen.api.generated.model.FieldError;
 import com.mustafagokselgokmen.api.generated.model.Problem;
 import jakarta.servlet.http.HttpServletRequest;
@@ -63,6 +64,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ErrorCode.FORBIDDEN)
             .instance(request.getRequestURI());
     return Problems.respond(HttpStatus.FORBIDDEN, new HttpHeaders(), problem);
+  }
+
+  @ExceptionHandler(RateLimitedException.class)
+  public ResponseEntity<Object> handleRateLimited(
+      RateLimitedException ex, HttpServletRequest request) {
+    long seconds = Math.max(1, (long) Math.ceil(ex.getRetryAfter().toMillis() / 1000.0));
+    HttpHeaders headers = new HttpHeaders();
+    headers.set(HttpHeaders.RETRY_AFTER, String.valueOf(seconds));
+    Problem problem =
+        Problems.of(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "Too many requests",
+                "Too many requests. Try again in %d second(s).".formatted(seconds),
+                ErrorCode.RATE_LIMITED)
+            .instance(request.getRequestURI());
+    return Problems.respond(HttpStatus.TOO_MANY_REQUESTS, headers, problem);
   }
 
   @ExceptionHandler(ConstraintViolationException.class)

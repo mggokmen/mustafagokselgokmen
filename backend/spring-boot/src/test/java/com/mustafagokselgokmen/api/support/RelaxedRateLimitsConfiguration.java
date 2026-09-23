@@ -16,6 +16,7 @@ public class RelaxedRateLimitsConfiguration {
     return registry -> {
       registry.add("app.rate-limit.sign-in.requests", () -> 100_000);
       registry.add("app.rate-limit.refresh.requests", () -> 100_000);
+      registry.add("app.rate-limit.contact-message.requests", () -> 100_000);
     };
   }
 }

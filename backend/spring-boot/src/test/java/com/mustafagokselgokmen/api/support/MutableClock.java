@@ -9,7 +9,9 @@ import java.time.ZoneOffset;
 /** A clock tests can move, so time-based behavior is verified without waiting. */
 public final class MutableClock extends Clock {
 
-  private volatile Instant instant = Instant.parse("2026-01-01T00:00:00Z");
+  // Starts at the real time: access tokens this clock issues are verified against the system
+  // clock, so their validity has to overlap with it.
+  private volatile Instant instant = Instant.now();
 
   public void advance(Duration amount) {
     instant = instant.plus(amount);

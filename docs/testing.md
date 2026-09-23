@@ -86,8 +86,8 @@ are **exactly the same for every backend**, with no changes for any particular o
    unsupported methods.
    - `contract/tests/schemathesis_hooks.py` signs in through the mock identity provider, so
      protected operations are called with a real access token.
-   - Only implemented operations are tested (`--include-tag`, currently `Auth`). The filter widens
-     as features land.
+   - Every operation in the contract is tested. While a feature is unimplemented, restrict the run
+     with `--include-tag`, so unimplemented operations don't report undocumented 404s.
 4. **Scenarios:** `contract/tests/*.hurl`, run with Hurl.
    - These are hand-written HTTP scenarios, stored as plain text, for behavior the schema can't
      express:

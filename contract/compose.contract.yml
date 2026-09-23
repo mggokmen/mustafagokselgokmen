@@ -14,6 +14,7 @@ services:
       # by the backend's integration tests (docs/testing.md).
       RATE_LIMIT_SIGN_IN_REQUESTS: "100000"
       RATE_LIMIT_REFRESH_REQUESTS: "100000"
+      RATE_LIMIT_CONTACT_MESSAGE_REQUESTS: "100000"
     depends_on:
       mock-oidc:
         condition: service_started
@@ -49,13 +50,10 @@ services:
       SCHEMATHESIS_HOOKS: schemathesis_hooks
       API_URL: http://api:8080
       IDP_URL: http://mock-oidc:8080/google
-    # Only operations that are implemented; widen the filter as features land (docs/testing.md).
     command:
       - run
       - /contract/openapi.yaml
       - --url
       - http://api:8080
-      - --include-tag
-      - Auth
       - --checks
       - all

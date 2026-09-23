@@ -526,11 +526,14 @@ components:
       properties:
         subject:
           type: string
+          description: NUL characters are removed before the message is stored.
           minLength: 1
           maxLength: 150
-          pattern: '^.*\S.*$'
+          # Same form as the message: "." excludes carriage returns in some regex flavours.
+          pattern: '^[\s\S]*\S[\s\S]*$'
         message:
           type: string
+          description: NUL characters are removed before the message is stored.
           minLength: 1
           maxLength: 5000
           pattern: '^[\s\S]*\S[\s\S]*$'

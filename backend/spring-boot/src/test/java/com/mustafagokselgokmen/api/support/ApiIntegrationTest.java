@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Import;
 @Import({
   TestcontainersConfiguration.class,
   IdentityTestConfiguration.class,
-  RelaxedRateLimitsConfiguration.class
+  RelaxedRateLimitsConfiguration.class,
+  OutboxTestConfiguration.class
 })
 public @interface ApiIntegrationTest {}

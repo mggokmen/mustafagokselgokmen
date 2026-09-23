@@ -65,6 +65,16 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
+    outbox_events {
+        uuid id PK
+        varchar aggregate_type
+        uuid aggregate_id
+        varchar event_type
+        jsonb payload
+        timestamptz published_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
     refresh_tokens {
         uuid id PK
         uuid user_id FK
@@ -81,6 +91,25 @@ erDiagram
   identity.
 - **A message can't be edited after it is sent.** Only its status changes.
 - **`refresh_tokens`** makes token rotation and revocation possible.
+
+### Events
+
+Sending a message also records an event, in the same transaction:
+
+```mermaid
+flowchart LR
+    request[POST /contact-messages] --> tx
+    subgraph tx[One transaction]
+        message[(contact_messages)]
+        event[(outbox_events)]
+    end
+    tx --> publisher[Outbox publisher]
+    publisher --> target[Target: a log line today, a broker later]
+```
+
+The message and the event are stored together or not at all. A publisher drains the table
+afterwards, so a failure to publish never loses the event and never rolls back the request. See
+[ADR-008](decisions/008-transactional-outbox.md).
 
 ### Message status
 
@@ -212,3 +241,4 @@ contract test suite unchanged.
 - [ADR-005: Mobile architecture](decisions/005-mobile-architecture.md)
 - [ADR-006: Sign in with Google](decisions/006-google-sign-in.md)
 - [ADR-007: Docker Compose and GitHub Actions](decisions/007-containers-and-ci-cd.md)
+- [ADR-008: Transactional outbox](decisions/008-transactional-outbox.md)

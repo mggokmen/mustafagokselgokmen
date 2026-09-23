@@ -46,6 +46,8 @@ src/main/java/com/mustafagokselgokmen/api/
 └── common/
     ├── error/                         GlobalExceptionHandler, ProblemErrorController,
     │                                  SecurityProblemHandler, ErrorCode
+    ├── outbox/                        OutboxWriter, OutboxPublisher, OutboxEventTarget (ADR-008)
+    ├── ratelimit/                     RateLimiter, interceptor, limits
     ├── persistence/                   AuditedEntity (UUID v7 id, audit timestamps)
     └── config/                        SecurityConfig, JacksonConfig, PersistenceConfig
 ```
@@ -109,6 +111,16 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 - **Concurrent first sign-ins** of the same person are serialized with a PostgreSQL advisory lock;
   otherwise both requests insert the user and the second one fails on the unique index.
 - **Associations** are `LAZY`. No cascades.
+
+## Events
+
+- A service that changes something and needs the world to know calls `OutboxWriter.record(...)`
+  **inside its own transaction**. The writer requires one (`Propagation.MANDATORY`).
+- `OutboxPublisher` is a scheduled, transactional method. It locks a batch with
+  `FOR UPDATE SKIP LOCKED`, publishes it and marks it published.
+- Business code never talks to a broker; it only records events ([ADR-008](../decisions/008-transactional-outbox.md)).
+- Tests set a long poll interval and call the publisher themselves, so they see exactly what they
+  caused.
 
 ## Validation
 

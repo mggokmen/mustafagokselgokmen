@@ -27,6 +27,10 @@ services:
   kafka:
     profiles: [unused]
 
+  # Not started either: it consumes what the API publishes, and here nothing is published.
+  notification:
+    profiles: [unused]
+
   mock-oidc:
     image: ghcr.io/navikt/mock-oauth2-server:6.0.2
     environment:

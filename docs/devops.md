@@ -19,9 +19,10 @@ environment-specific is baked into an image.
 ### Images
 
 - **One multi-stage Dockerfile per deployable application,** kept next to its code, for example
-  `backend/spring-boot/Dockerfile`.
-- **The build context is the repository root,** because builds read `contract/openapi.yaml`.
-  `.dockerignore` keeps everything else out of the context, including every `.env` file.
+  `backend/spring-boot/Dockerfile` and `backend/notification-service/Dockerfile`.
+- **The build context is the repository root:** the API's build reads `contract/openapi.yaml`, and
+  one `.dockerignore` then covers every image. It keeps everything else out of the context,
+  including every `.env` file.
 - **Build stage:**
   - Uses a JDK image.
   - Dependencies are resolved in their own cached layer, then the application is built.
@@ -37,10 +38,13 @@ environment-specific is baked into an image.
 
 ### Docker Compose
 
-- **`docker-compose.yml`** at the repository root defines the local stack: `postgres`, `kafka` and
-  `api`. The web app joins it once it's scaffolded.
-- **The contract test stack leaves Kafka out** and sets `OUTBOX_TARGET=log`, because those tests
-  check the API, not the broker.
+- **`docker-compose.yml`** at the repository root defines the local stack: `postgres`, `kafka`,
+  `api` and `notification`. The web app joins it once it's scaffolded.
+- **The contract test stack leaves Kafka and the notification service out** and sets
+  `OUTBOX_TARGET=log`, because those tests check the API, not the broker.
+- **Each service has its own database.** `docker/postgres/init/` creates the notification service's
+  database and role when the data volume is empty. An existing stack picks it up after
+  `docker compose down -v`.
 - **Only containers with a real purpose.** For example, Redis is not added until a feature needs it
   ([ADR-007](decisions/007-containers-and-ci-cd.md)).
 - **Port:** PostgreSQL is published on host port **5433**, so it doesn't clash with a locally
@@ -49,7 +53,7 @@ environment-specific is baked into an image.
 | Command | What it does |
 |---|---|
 | `docker compose up -d postgres` | Starts the database only, for running the API from source |
-| `docker compose up --build` | Starts the database and the API |
+| `docker compose up --build` | Starts the database, the broker, the API and the notification service |
 | `docker compose down` | Stops the stack and keeps the data. Add `-v` to also delete the database volume. |
 
 ## Configuration and secrets
@@ -77,6 +81,7 @@ Workflows live in `.github/workflows/`.
 |---|---|
 | `contract.yml` | 1. Lint (Redocly)<br>2. Breaking-change check against the target branch (oasdiff; pull requests only) |
 | `backend-spring-boot.yml` | 1. Format check (Spotless)<br>2. Build, including code generation<br>3. Unit and integration tests (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy)<br>6. Contract tests: Hurl and Schemathesis via `contract/run-tests.sh` |
+| `backend-notification-service.yml` | 1. Format check (Spotless)<br>2. Build<br>3. Consumer tests against PostgreSQL and Kafka (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy) |
 | `codeql.yml` | Static security analysis (CodeQL) of the Java code and the workflow files. Also runs weekly. |
 
 The target pipeline for a pull request is:
@@ -101,7 +106,7 @@ Every check must pass before merging ([git.md](git.md)).
 | Setting | Value |
 |---|---|
 | Changes only through pull requests | yes; 0 required approvals, because there is a single maintainer |
-| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
+| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
 | Branch must be up to date before merging | yes |
 | Conversations must be resolved | yes |
 | Force pushes and deletion | blocked |
@@ -116,7 +121,7 @@ CI and CD are separate. CI proves that a change is correct; CD publishes a relea
 
 | Trigger | Result |
 |---|---|
-| Tag `vX.Y.Z` on `main` (`release.yml`) | `ghcr.io/<owner>/mustafagokselgokmen-api`, tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
+| Tag `vX.Y.Z` on `main` (`release.yml`) | `ghcr.io/<owner>/mustafagokselgokmen-api` and `ghcr.io/<owner>/mustafagokselgokmen-notification`, each tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
 
 Deployment isn't configured yet. Once a hosting target is chosen, a `deploy` job runs after the
 image is published:

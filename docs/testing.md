@@ -41,6 +41,15 @@ login shortcut.
 - **Kafka:** the publishing tests run against a broker in Testcontainers, the same image as the
   development stack. A test that consumes takes the address from the container, because
   `@ServiceConnection` configures the application rather than setting a property.
+- **Consumers** are tested the same way, from the outside: the test publishes a record exactly as
+  the API does, then asserts on what the consumer did. Every consumer covers, at least:
+  - the event is handled
+  - the same event delivered twice is handled once
+  - a record that can never be read is dead-lettered without a retry
+  - a failure that persists is retried the configured number of times, is then dead-lettered, and
+    leaves nothing recorded as handled
+  - An outgoing call, such as sending a notification, is behind an interface. The test injects an
+    implementation that records what it was asked to do and fails on demand.
 - **`@WebMvcTest`** proves the HTTP layer:
   - status codes
   - the `Location` header
@@ -126,6 +135,7 @@ section lists which tests CI must run.
 
 - **One job per application:**
   - Backend: unit and integration tests
+  - Notification service: consumer tests against PostgreSQL and Kafka
   - Web: unit tests, build, Playwright
   - Android: unit tests
   - iOS: build and tests, on a macOS runner

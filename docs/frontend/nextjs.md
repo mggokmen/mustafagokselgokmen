@@ -20,8 +20,9 @@ Browser --(HttpOnly cookies)--> Next.js server --(Authorization: Bearer)--> Back
   Server Component, a Server Action or a Route Handler.
 - **`src/lib/api/api-client.ts` is the only module that creates the `openapi-fetch` client.** It:
   - is marked `server-only`
-  - reads the access token from cookies
-  - turns ProblemDetail responses into a typed `ApiError`
+  - takes the access token from the session (`lib/auth`), which read it from the cookies
+  - exposes `unwrap()`, which returns the body of a successful call and throws a typed `ApiError`
+    for anything else, so a failed request is never mistaken for an empty result
 - **Components never call `fetch` to get backend data.**
 - **Every environment variable is server-only:** `API_BASE_URL`, `APP_URL`, `GOOGLE_CLIENT_ID`,
   `GOOGLE_CLIENT_SECRET`. None of them has the `NEXT_PUBLIC_` prefix.
@@ -120,3 +121,25 @@ a nonce-based Content-Security-Policy.
 
 `npm run gen:api` runs `openapi-typescript ../../contract/openapi.yaml -o src/lib/api/schema.d.ts`.
 It runs automatically through the `predev` and `prebuild` scripts. The output is gitignored.
+
+## Commands
+
+Node 24. Configuration comes from `.env.local`, copied from `.env.example`.
+
+| Task | Command |
+|---|---|
+| Install | `npm install` |
+| Develop | `npm run dev` |
+| Unit tests | `npm test` (`npm run test:watch` while working) |
+| Lint, format, types | `npm run lint`, `npm run format`, `npm run typecheck` |
+| Build | `npm run build` |
+
+## Tests
+
+- **Vitest runs in a Node environment**, because everything tested here runs on the server. The
+  config maps `server-only` to React's empty module, so server modules can be tested the way the
+  server loads them.
+- **Async Server Components are not unit-tested.** The Next.js testing guide recommends end-to-end
+  tests for them, and that is where they are covered.
+- **What unit tests are for:** the API client, error mapping, session and cookie helpers, and
+  anything that decides something (redirects, validation, `returnTo`).

@@ -61,7 +61,7 @@ More: [Architecture](docs/architecture.md)
 |---|---|
 | API contract | OpenAPI 3.0.3 |
 | Identity | Sign in with Google (OpenID Connect) |
-| Backend | Java, Spring Boot, Spring Security (JWT), Flyway, PostgreSQL |
+| Backend | Java, Spring Boot, Spring Security (JWT), Flyway, PostgreSQL, Kafka |
 | Web | Next.js, React, TypeScript, Tailwind CSS |
 | Android | Kotlin, Jetpack Compose, Hilt, Retrofit, Coroutines, Flow, Credential Manager |
 | iOS | Swift, SwiftUI, async/await, URLSession, Keychain |

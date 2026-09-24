@@ -16,6 +16,13 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      # Every replica must acknowledge, and a retry must not duplicate the record.
+      acks: all
+      properties:
+        enable.idempotence: true
 
 app:
   # Events are written with the change that produced them and published from here (ADR-008).
@@ -23,6 +30,9 @@ app:
     enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
     batch-size: 100
     poll-interval: 1s
+    # Where published events go: "kafka", or "log" where no broker is available.
+    target: ${OUTBOX_TARGET:log}
+    topic-prefix: events
 
   # Requests per client IP, counted by this instance (docs/security.md#rate-limiting).
   rate-limit:

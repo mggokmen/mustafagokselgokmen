@@ -68,7 +68,7 @@ docker-compose.yml   local stack: PostgreSQL + API
 |---|---|
 | Contract | OpenAPI 3.0.3 |
 | Identity | Sign in with Google (OpenID Connect); the API issues its own JWT tokens |
-| Backend | Java 21, Spring Boot 4, Spring Web MVC, Spring Data JPA, Spring Security (JWT), Flyway, PostgreSQL 18 |
+| Backend | Java 21, Spring Boot 4, Spring Web MVC, Spring Data JPA, Spring Security (JWT), Flyway, PostgreSQL 18, Kafka |
 | Web | Next.js (App Router), React, TypeScript, Tailwind CSS |
 | Android | Kotlin, Jetpack Compose, Hilt, Retrofit, Coroutines + Flow, Room, DataStore |
 | iOS | Swift 6, SwiftUI, async/await, URLSession, Keychain |

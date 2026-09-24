@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "./api-error";
 import { createApiClient, unwrap } from "./api-client";
@@ -21,16 +21,10 @@ let calls: Request[];
 
 beforeEach(() => {
   calls = [];
-  vi.stubEnv("API_BASE_URL", "http://api.test");
   vi.stubGlobal("fetch", (input: Request) => {
     calls.push(input);
     return Promise.resolve(jsonResponse(user));
   });
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-  vi.unstubAllEnvs();
 });
 
 describe("createApiClient", () => {

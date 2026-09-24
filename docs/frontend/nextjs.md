@@ -131,8 +131,12 @@ Node 24. Configuration comes from `.env.local`, copied from `.env.example`.
 | Install | `npm install` |
 | Develop | `npm run dev` |
 | Unit tests | `npm test` (`npm run test:watch` while working) |
+| End-to-end tests | `e2e/run-tests.sh` from anywhere (requires Docker) |
 | Lint, format, types | `npm run lint`, `npm run format`, `npm run typecheck` |
 | Build | `npm run build` |
+
+Sign-in needs a Google OAuth client. To work without one, point `GOOGLE_ISSUER` at a mock provider,
+which is what `e2e/run-tests.sh` does.
 
 ## Tests
 
@@ -143,3 +147,6 @@ Node 24. Configuration comes from `.env.local`, copied from `.env.example`.
   tests for them, and that is where they are covered.
 - **What unit tests are for:** the API client, error mapping, session and cookie helpers, and
   anything that decides something (redirects, validation, `returnTo`).
+- **What end-to-end tests are for:** everything about a session that only a browser can show —
+  which cookies it holds, what they are marked with, and where it is allowed to go. The cases are
+  listed in [testing.md](../testing.md#web).

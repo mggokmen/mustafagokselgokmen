@@ -48,3 +48,31 @@ jobs:
         env:
           # The build reads the configuration but calls nothing.
           API_BASE_URL: http://localhost:8080
+          APP_URL: http://localhost:3000
+          GOOGLE_CLIENT_ID: build-only
+          GOOGLE_CLIENT_SECRET: build-only
+
+  e2e:
+    name: Web end-to-end tests
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/nextjs/package-lock.json
+      - run: npm ci
+        working-directory: frontend/nextjs
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend/nextjs
+      # Starts PostgreSQL, the API and a mock identity provider, then drives a real browser
+      # through sign-in (docs/testing.md#web).
+      - run: bash frontend/nextjs/e2e/run-tests.sh
+      - name: Upload the report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: frontend/nextjs/playwright-report/

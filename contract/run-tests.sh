@@ -7,8 +7,9 @@ cd "$(dirname "$0")/.."
 
 # Throwaway values for this run only; nothing is published on the host.
 POSTGRES_PASSWORD="$(openssl rand -hex 16)"
+NOTIFICATION_DB_PASSWORD="$(openssl rand -hex 16)"
 JWT_SECRET="$(openssl rand -base64 48)"
-export POSTGRES_PASSWORD JWT_SECRET
+export POSTGRES_PASSWORD NOTIFICATION_DB_PASSWORD JWT_SECRET
 export GOOGLE_CLIENT_IDS=contract-tests
 export ADMIN_EMAILS=admin@example.com
 

@@ -13,9 +13,33 @@ updates:
       spring-boot:
         patterns: ["org.springframework.boot*"]
 
+  - package-ecosystem: maven
+    directory: /backend/notification-service
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      spring-boot:
+        patterns: ["org.springframework.boot*"]
+
   # Java and PostgreSQL major versions are project decisions, not bot updates (docs/devops.md).
   - package-ecosystem: docker
     directory: /backend/spring-boot
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      - dependency-name: eclipse-temurin
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: docker
+    directory: /backend/notification-service
     target-branch: develop
     schedule:
       interval: weekly

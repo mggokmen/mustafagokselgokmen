@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: notification
+  config:
+    # Local runs read secrets from backend/notification-service/.env (gitignored). Containers use
+    # real environment variables instead.
+    import: optional:file:.env[.properties]
+  datasource:
+    # This service has a database of its own. It never reads the API's tables (ADR-010).
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:notification}
+      # A new deployment reads the events already on the topic rather than only what comes next.
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      # Only used to publish to the dead-letter topic.
+      acks: all
+      properties:
+        enable.idempotence: true
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+server:
+  # Not the API's port, so both can run from source on one machine.
+  port: ${SERVER_PORT:8081}
+
+app:
+  events:
+    contact-message-topic: events.contact-message
+  consumer:
+    retry:
+      max-attempts: ${CONSUMER_MAX_ATTEMPTS:4}
+      initial-backoff: 1s
+      multiplier: 2.0
+      max-backoff: 30s
+    # events.contact-message.dlt holds what this service could not handle.
+    dead-letter-suffix: .dlt
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true

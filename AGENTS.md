@@ -38,6 +38,9 @@ platform and every backend.
 
   Business rules such as allowed state transitions live in the domain model. Services orchestrate
   use cases. Don't add layers or interfaces unless there is a concrete need.
+- Work that follows a request doesn't run inside it. The API records an event with the change that
+  produced it and publishes it to Kafka; the notification service consumes it. Delivery is at least
+  once, so consumers are idempotent and each service owns its own database.
 - The web app uses a backend-for-frontend setup: the browser talks only to the Next.js server.
 - Both mobile apps use MVVM.
 
@@ -49,6 +52,7 @@ Details and reasoning: [docs/architecture.md](docs/architecture.md), [docs/decis
 contract/            openapi.yaml + language-neutral API scenario tests
 backend/
   spring-boot/       Spring Boot implementation
+  notification-service/  Kafka consumer: notifies on contact message events
   go/                (planned)
   dotnet/            (planned)
   fastapi/           (planned)
@@ -58,9 +62,14 @@ mobile/
   android/           Android app
   ios/               iOS app
 docs/                standards, architecture, decision records
+docker/              container support files, such as database init scripts
 .github/             CI/CD workflows, Dependabot, pull request template
-docker-compose.yml   local stack: PostgreSQL + API
+docker-compose.yml   local stack: PostgreSQL + Kafka + API + notification service
 ```
+
+Only `backend/spring-boot` and its siblings implement the contract. The notification service is not
+a backend implementation: it has no HTTP API, it consumes events
+([ADR-010](docs/decisions/010-event-consumer-resilience.md)).
 
 ## Technology Stack
 
@@ -78,7 +87,8 @@ docker-compose.yml   local stack: PostgreSQL + API
 | Observability | Spring Boot Actuator, structured JSON logging |
 
 Each stack has its own standard: [Spring Boot](docs/backend/spring-boot.md),
-[Next.js](docs/frontend/nextjs.md), [Android](docs/mobile/android.md), [iOS](docs/mobile/ios.md).
+[notification service](docs/backend/notification-service.md), [Next.js](docs/frontend/nextjs.md),
+[Android](docs/mobile/android.md), [iOS](docs/mobile/ios.md).
 
 ## Build and Run
 
@@ -87,16 +97,18 @@ running anything.
 
 | Task | Command |
 |---|---|
-| Run the local stack (PostgreSQL + API) | `docker compose up --build` |
+| Run the local stack (PostgreSQL, Kafka, API, notification service) | `docker compose up --build` |
 | Run only the database | `docker compose up -d postgres` |
 | Build and test the backend | `cd backend/spring-boot && ./mvnw verify` |
 | Run the backend from source | `cd backend/spring-boot && ./mvnw spring-boot:run` |
-| Format Java code | `cd backend/spring-boot && ./mvnw spotless:apply` |
+| Build and test the notification service | `cd backend/notification-service && ./mvnw verify` |
+| Format Java code | `./mvnw spotless:apply` in the module you changed |
 | Lint the API contract | `npx @redocly/cli lint contract/openapi.yaml` |
 | Run the contract tests (Hurl + Schemathesis, in Docker) | `contract/run-tests.sh` |
 
 The API listens on `http://localhost:8080`. Its health endpoint is
-`http://localhost:8080/actuator/health`.
+`http://localhost:8080/actuator/health`. The notification service has no API; its health endpoint
+is `http://localhost:8081/actuator/health`.
 
 ## Coding Standards
 
@@ -144,6 +156,7 @@ Role suffixes: `*Controller`, `*Service`, `*Repository`, `*ViewModel`, `*Screen`
 | Application | Identifier |
 |---|---|
 | Spring Boot | groupId `com.mustafagokselgokmen`, artifactId `api`, base package `com.mustafagokselgokmen.api` |
+| Notification service | groupId `com.mustafagokselgokmen`, artifactId `notification`, base package `com.mustafagokselgokmen.notification` |
 | Web | npm package `mustafagokselgokmen-web` (private) |
 | Android | `applicationId` and `namespace` `com.mustafagokselgokmen.android` |
 | iOS | bundle identifier `com.mustafagokselgokmen.ios` |
@@ -268,6 +281,8 @@ A change is done when all of these hold:
 - Adding a dependency without a stated reason.
 - Disabling or skipping tests to make a build pass.
 - Force-pushing to `main` or `develop`, or committing to them directly.
+- Reading or writing another service's database instead of consuming its events.
+- Handling an event without making the handling idempotent, or dropping one that fails.
 
 When a standard conflicts with a requirement, raise the conflict and resolve it by changing the
 standard (with an ADR where applicable). Don't work around it.

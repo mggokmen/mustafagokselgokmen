@@ -25,6 +25,20 @@ updates:
       spring-boot:
         patterns: ["org.springframework.boot*"]
 
+  - package-ecosystem: npm
+    directory: /frontend/nextjs
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      next:
+        patterns: ["next", "eslint-config-next", "@next/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+
   # Java and PostgreSQL major versions are project decisions, not bot updates (docs/devops.md).
   - package-ecosystem: docker
     directory: /backend/spring-boot

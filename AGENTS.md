@@ -102,7 +102,10 @@ running anything.
 | Build and test the backend | `cd backend/spring-boot && ./mvnw verify` |
 | Run the backend from source | `cd backend/spring-boot && ./mvnw spring-boot:run` |
 | Build and test the notification service | `cd backend/notification-service && ./mvnw verify` |
+| Run the web app from source | `cd frontend/nextjs && npm install && npm run dev` |
+| Check the web app | `cd frontend/nextjs && npm run lint && npm run typecheck && npm test` |
 | Format Java code | `./mvnw spotless:apply` in the module you changed |
+| Format web code | `cd frontend/nextjs && npm run format` |
 | Lint the API contract | `npx @redocly/cli lint contract/openapi.yaml` |
 | Run the contract tests (Hurl + Schemathesis, in Docker) | `contract/run-tests.sh` |
 

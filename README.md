@@ -47,7 +47,7 @@ More: [Architecture](docs/architecture.md)
 
 | Application | Stack | Path | Status |
 |---|---|---|---|
-| Web | Next.js, React, TypeScript | [`frontend/nextjs`](frontend/nextjs) | Planned |
+| Web | Next.js, React, TypeScript | [`frontend/nextjs`](frontend/nextjs) | In progress |
 | Android | Kotlin, Jetpack Compose | [`mobile/android`](mobile/android) | Planned |
 | iOS | Swift, SwiftUI | [`mobile/ios`](mobile/ios) | Planned |
 

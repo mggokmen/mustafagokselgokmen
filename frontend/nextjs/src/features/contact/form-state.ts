@@ -11,3 +11,11 @@ export interface ContactFormState {
 }
 
 export const EMPTY_FORM_STATE: ContactFormState = {};
+
+/** What a status change knows afterwards. */
+export interface StatusFormState {
+  message?: string;
+  changed?: boolean;
+}
+
+export const EMPTY_STATUS_STATE: StatusFormState = {};

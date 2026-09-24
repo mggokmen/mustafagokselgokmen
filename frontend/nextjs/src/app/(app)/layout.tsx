@@ -21,6 +21,11 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/contact" className="hover:underline">
               Messages
             </Link>
+            {user.role === "ADMIN" && (
+              <Link href="/admin/messages" className="hover:underline">
+                All messages
+              </Link>
+            )}
             <Link href="/account" className="hover:underline">
               Account
             </Link>

@@ -34,4 +34,10 @@ trap cleanup EXIT
 "${compose[@]}" up --detach --build --wait api mock-oidc
 
 cd "$root/frontend/nextjs"
+# Built once here: Playwright starts two instances of it, on two ports.
+API_BASE_URL=http://localhost:18080 \
+  APP_URL=http://localhost:3100 \
+  GOOGLE_CLIENT_ID=web-e2e \
+  GOOGLE_CLIENT_SECRET=web-e2e-secret \
+  npm run build
 npx playwright test "$@"

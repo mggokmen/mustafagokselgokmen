@@ -38,7 +38,7 @@ src/
 │   ├── auth/google/callback/route.ts
 │   ├── (app)/layout.tsx             signed-in area
 │   ├── (app)/contact/page.tsx       contact form + the user's own messages
-│   ├── (app)/admin/messages/...     admin views (after the MVP)
+│   ├── (app)/admin/messages/page.tsx  every message, filtered, with the status workflow
 │   ├── error.tsx
 │   └── not-found.tsx
 ├── features/contact/                components, actions.ts (Server Actions), schemas.ts (zod)
@@ -90,6 +90,20 @@ src/
 5. **Server Components can't set cookies,** so they never refresh tokens. On a 401 they call
    `redirect("/login")`.
 6. **Logout** is a Server Action. It calls `/auth/logout`, deletes both cookies, and redirects.
+
+## Admin views
+
+- **Who may see them is the backend's answer.** The page asks `/auth/me` and shows anyone who
+  isn't an `ADMIN` a **not found**, rather than a "not allowed": a page they may not use is not one
+  whose existence they need confirmed. The backend refuses them with 403 regardless of what this
+  app renders.
+- **The status buttons offer only the moves the workflow allows**
+  ([architecture.md](../architecture.md#message-status)), so the admin is not invited to ask for
+  something that will be refused. The backend still decides.
+- **Optimistic concurrency is carried by the form.** Each message's `version` is a hidden field, so
+  a change is made against the message as it was displayed. A 409 means someone got there first, or
+  the move isn't allowed: the list is revalidated and the admin is told, and nothing is overwritten.
+- **Filters live in the URL** (`?status=NEW`), so a filtered list can be linked to and reloaded.
 
 ## Contact form
 

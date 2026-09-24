@@ -1,6 +1,6 @@
 import "server-only";
 
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { createApiClient, unwrap } from "@/lib/api/api-client";
 import { ApiError } from "@/lib/api/api-error";
@@ -33,6 +33,19 @@ export async function requireUser(returnTo?: string): Promise<User> {
   const user = await currentUser();
   if (user === undefined) {
     redirect(returnTo === undefined ? "/login" : `/login?returnTo=${encodeURIComponent(returnTo)}`);
+  }
+  return user;
+}
+
+/**
+ * The user, if they are an admin. Anyone else is shown "not found" rather than "not allowed": a
+ * page they may not use is not a page whose existence they need confirmed. The backend refuses
+ * them too, with 403, whatever this app renders.
+ */
+export async function requireAdmin(returnTo?: string): Promise<User> {
+  const user = await requireUser(returnTo);
+  if (user.role !== "ADMIN") {
+    notFound();
   }
   return user;
 }

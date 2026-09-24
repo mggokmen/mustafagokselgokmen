@@ -98,6 +98,27 @@ And for the contact flow:
 | A message containing markup | Shown as text; no element is created from it |
 | The sixth message in an hour | The API's 429 becomes a sentence saying when to try again, from `Retry-After` |
 
+And for the admin views:
+
+| Case | What it proves |
+|---|---|
+| An admin opens the list | Messages they did not send are there, with their author |
+| Moving a message | `NEW` → `IN_PROGRESS` → `RESOLVED`, and only a reopen after that |
+| The buttons offered | Only the moves the workflow allows; no way to ask for one it doesn't |
+| A status filter | Narrows the list, stays in the URL, survives a reload |
+| Two admins, one message | The second change carries a stale `version`, is refused with 409, overwrites nothing, and the list shown afterwards is the backend's |
+| A `USER` opening the admin area | Not found, and the backend refuses them regardless |
+
+**Identities:** the tests need a `USER` and an `ADMIN`, and a second user whose messages the admin
+did not write. The web app is started several times, on different ports, and the mock provider
+answers each address with a different account. The application is the same build with the same
+configuration in each case: nothing about the tests reaches the app, and the roles come from the
+backend, in the tokens it issues.
+
+**Keep destructive tests to themselves.** The test that exhausts the hourly message limit uses an
+account no other test depends on. A test that uses up a quota, or revokes something, must not be
+able to break the ones that follow.
+
 Unit tests (Vitest) cover what doesn't need a browser: the API client, the error mapping, the
 cookie attributes and `returnTo` validation. Async Server Components are not unit-tested; the
 Next.js guidance is to cover them end to end, which is what the table above does.

@@ -1,12 +1,7 @@
 import Link from "next/link";
 
 import type { ContactMessage, ContactMessagePage } from "@/lib/api/types";
-
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "New",
-  IN_PROGRESS: "In progress",
-  RESOLVED: "Resolved",
-};
+import { STATUS_LABELS } from "./transitions";
 
 const STATUS_CLASSES: Record<string, string> = {
   NEW: "border-sky-300 text-sky-900 dark:border-sky-800 dark:text-sky-200",
@@ -55,7 +50,7 @@ function StatusBadge({ status }: { status: ContactMessage["status"] }) {
     <span
       className={`rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_CLASSES[status] ?? ""}`}
     >
-      {STATUS_LABELS[status] ?? status}
+      {STATUS_LABELS[status]}
     </span>
   );
 }

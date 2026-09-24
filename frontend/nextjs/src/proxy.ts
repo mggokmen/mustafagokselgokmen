@@ -1,12 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createApiClient, unwrap } from "@/lib/api/api-client";
+import { refreshSession } from "@/lib/auth/refresh";
 import { safeReturnTo } from "@/lib/auth/return-to";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   clearedSessionCookies,
-  sessionCookies,
 } from "@/lib/auth/session";
 
 /**
@@ -26,9 +25,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   let refreshed;
   try {
-    refreshed = sessionCookies(
-      unwrap(await createApiClient().POST("/api/v1/auth/refresh", { body: { refreshToken } })),
-    );
+    refreshed = await refreshSession(refreshToken);
   } catch {
     // The token was expired, already used or revoked. Whatever the reason, this browser has no
     // session any more, and the stale cookies go with it.

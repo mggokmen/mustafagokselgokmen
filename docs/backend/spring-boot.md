@@ -119,6 +119,13 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 - `OutboxPublisher` is a scheduled, transactional method. It locks a batch with
   `FOR UPDATE SKIP LOCKED`, publishes it and marks it published.
 - Business code never talks to a broker; it only records events ([ADR-008](../decisions/008-transactional-outbox.md)).
+- **Where events go** is one setting, `OUTBOX_TARGET`:
+
+| Value | Target |
+|---|---|
+| `kafka` | `events.<aggregate-type>`, keyed by aggregate id, with `event-id`, `event-type` and `aggregate-type` headers ([ADR-009](../decisions/009-kafka-for-events.md)) |
+| `log` | a log line, for environments without a broker, such as the contract tests |
+
 - Tests set a long poll interval and call the publisher themselves, so they see exactly what they
   caused.
 

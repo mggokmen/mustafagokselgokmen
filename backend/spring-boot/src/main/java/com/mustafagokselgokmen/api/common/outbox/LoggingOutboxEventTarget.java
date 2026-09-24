@@ -2,10 +2,12 @@ package com.mustafagokselgokmen.api.common.outbox;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-/** The default target: events are written to the log until a broker takes over. */
+/** Writes events to the log. Used where no broker is available, such as the contract tests. */
 @Component
+@ConditionalOnProperty(name = "app.outbox.target", havingValue = "log", matchIfMissing = true)
 class LoggingOutboxEventTarget implements OutboxEventTarget {
 
   private static final Logger log = LoggerFactory.getLogger(LoggingOutboxEventTarget.class);

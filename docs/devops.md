@@ -37,8 +37,10 @@ environment-specific is baked into an image.
 
 ### Docker Compose
 
-- **`docker-compose.yml`** at the repository root defines the local stack: `postgres` and `api`.
-  The web app joins it once it's scaffolded.
+- **`docker-compose.yml`** at the repository root defines the local stack: `postgres`, `kafka` and
+  `api`. The web app joins it once it's scaffolded.
+- **The contract test stack leaves Kafka out** and sets `OUTBOX_TARGET=log`, because those tests
+  check the API, not the broker.
 - **Only containers with a real purpose.** For example, Redis is not added until a feature needs it
   ([ADR-007](decisions/007-containers-and-ci-cd.md)).
 - **Port:** PostgreSQL is published on host port **5433**, so it doesn't clash with a locally

@@ -7,7 +7,14 @@ services:
 
   api:
     ports: !reset []
+    # The contract tests check the API, not the broker, so they run without Kafka.
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      mock-oidc:
+        condition: service_started
     environment:
+      OUTBOX_TARGET: log
       GOOGLE_ISSUERS: http://mock-oidc:8080/google
       GOOGLE_JWKS_URI: http://mock-oidc:8080/google/jwks
       # Schemathesis sends hundreds of requests from one address. Rate limiting itself is covered
@@ -15,9 +22,10 @@ services:
       RATE_LIMIT_SIGN_IN_REQUESTS: "100000"
       RATE_LIMIT_REFRESH_REQUESTS: "100000"
       RATE_LIMIT_CONTACT_MESSAGE_REQUESTS: "100000"
-    depends_on:
-      mock-oidc:
-        condition: service_started
+
+  # Not started: the api service above no longer depends on it.
+  kafka:
+    profiles: [unused]
 
   mock-oidc:
     image: ghcr.io/navikt/mock-oauth2-server:6.0.2

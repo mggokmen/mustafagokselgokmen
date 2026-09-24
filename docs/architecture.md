@@ -104,12 +104,18 @@ flowchart LR
         event[(outbox_events)]
     end
     tx --> publisher[Outbox publisher]
-    publisher --> target[Target: a log line today, a broker later]
+    publisher --> kafka[[Kafka: events.contact-message]]
+    kafka --> consumers[Consumers]
 ```
 
 The message and the event are stored together or not at all. A publisher drains the table
-afterwards, so a failure to publish never loses the event and never rolls back the request. See
-[ADR-008](decisions/008-transactional-outbox.md).
+afterwards, so a failure to publish never loses the event and never rolls back the request
+([ADR-008](decisions/008-transactional-outbox.md)).
+
+Events go to Kafka, keyed by the aggregate's id and carrying `event-id`, `event-type` and
+`aggregate-type` headers ([ADR-009](decisions/009-kafka-for-events.md)). Publishing is at least
+once, so consumers must be idempotent. Where no broker is available, such as the contract tests,
+the target writes a log line instead.
 
 ### Message status
 
@@ -242,3 +248,4 @@ contract test suite unchanged.
 - [ADR-006: Sign in with Google](decisions/006-google-sign-in.md)
 - [ADR-007: Docker Compose and GitHub Actions](decisions/007-containers-and-ci-cd.md)
 - [ADR-008: Transactional outbox](decisions/008-transactional-outbox.md)
+- [ADR-009: Kafka as the event broker](decisions/009-kafka-for-events.md)

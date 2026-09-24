@@ -38,6 +38,9 @@ login shortcut.
 
 - **Database:** use Testcontainers with `@ServiceConnection`. Never H2, and never any other stand-in
   for PostgreSQL.
+- **Kafka:** the publishing tests run against a broker in Testcontainers, the same image as the
+  development stack. A test that consumes takes the address from the container, because
+  `@ServiceConnection` configures the application rather than setting a property.
 - **`@WebMvcTest`** proves the HTTP layer:
   - status codes
   - the `Location` header

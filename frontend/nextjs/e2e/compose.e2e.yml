@@ -1,0 +1,42 @@
+# Backend stack for the web end-to-end tests, layered on the repository's docker-compose.yml.
+# Started by e2e/run-tests.sh; the web app itself is started by Playwright.
+#
+# Sign-in goes through a mock OpenID Connect provider instead of Google. The browser, the web app
+# and the API must agree on the issuer, so the provider is published on the host under the address
+# the browser uses, while the API fetches its keys over the container network.
+#
+# Ports differ from the development stack, so this can run next to it.
+services:
+  postgres:
+    ports: !reset []
+
+  # The web tests check the API's responses, not the broker or its consumer.
+  kafka:
+    profiles: [unused]
+
+  notification:
+    profiles: [unused]
+
+  api:
+    ports: !override
+      - "18080:8080"
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      mock-oidc:
+        condition: service_started
+    environment:
+      OUTBOX_TARGET: log
+      GOOGLE_CLIENT_IDS: web-e2e
+      ADMIN_EMAILS: admin@example.com
+      GOOGLE_ISSUERS: http://localhost:18090/google
+      GOOGLE_JWKS_URI: http://mock-oidc:8080/google/jwks
+
+  mock-oidc:
+    image: ghcr.io/navikt/mock-oauth2-server:6.0.2
+    environment:
+      JSON_CONFIG_PATH: /config/mock-oidc.json
+    volumes:
+      - ./frontend/nextjs/e2e/mock-oidc.json:/config/mock-oidc.json:ro
+    ports:
+      - "18090:8080"

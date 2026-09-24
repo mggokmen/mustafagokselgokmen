@@ -1,0 +1,22 @@
+{
+  "interactiveLogin": false,
+  "tokenCallbacks": [
+    {
+      "issuerId": "google",
+      "tokenExpiry": 600,
+      "requestMappings": [
+        {
+          "requestParam": "grant_type",
+          "match": "authorization_code",
+          "claims": {
+            "sub": "web-e2e-user",
+            "aud": ["web-e2e"],
+            "email": "user@example.com",
+            "email_verified": true,
+            "name": "Web End-to-end User"
+          }
+        }
+      ]
+    }
+  ]
+}

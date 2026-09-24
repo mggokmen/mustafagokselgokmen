@@ -89,6 +89,16 @@ tokens, which the client uses for every later request.
   balancer needs a shared store, such as Redis, otherwise each instance allows the full limit on its
   own. Introducing it will need its own ADR, like every other piece of infrastructure
   ([ADR-007](decisions/007-containers-and-ci-cd.md)).
+- **The web app counts as one client.** Its requests reach the API from the Next.js server, not from
+  the browser, so `POST /auth/google` and `POST /auth/refresh` are counted for the whole web app
+  rather than per visitor. One visitor retrying sign-in can therefore use up the limit for everyone
+  on the web.
+  - This is accepted while there is no deployment: the limits still protect the API from direct
+    abuse, and the mobile apps, which call the API directly, are still counted per device.
+  - The fix, when a deployment target is chosen, is for the web app to pass the visitor's address
+    through and for the API to take the client address from that header **only** when the request
+    comes from a proxy it is configured to trust. Trusting the header unconditionally would let
+    anyone spoof it and make the limit meaningless.
 - General API limits are added when a real need appears.
 
 ## Web sign-in flow

@@ -83,7 +83,7 @@ Workflows live in `.github/workflows/`.
 | `contract.yml` | 1. Lint (Redocly)<br>2. Breaking-change check against the target branch (oasdiff; pull requests only) |
 | `backend-spring-boot.yml` | 1. Format check (Spotless)<br>2. Build, including code generation<br>3. Unit and integration tests (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy)<br>6. Contract tests: Hurl and Schemathesis via `contract/run-tests.sh` |
 | `backend-notification-service.yml` | 1. Format check (Spotless)<br>2. Build<br>3. Consumer tests against PostgreSQL and Kafka (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy) |
-| `web.yml` | 1. Generate the API types from the contract<br>2. Format check (Prettier)<br>3. Lint (ESLint)<br>4. Type check (`tsc`)<br>5. Unit tests (Vitest)<br>6. Build |
+| `web.yml` | 1. Generate the API types from the contract<br>2. Format check (Prettier)<br>3. Lint (ESLint)<br>4. Type check (`tsc`)<br>5. Unit tests (Vitest)<br>6. Build<br>7. End-to-end tests: a real browser against the API and a mock identity provider (`frontend/nextjs/e2e/run-tests.sh`) |
 | `codeql.yml` | Static security analysis (CodeQL) of the Java code and the workflow files. Also runs weekly. |
 
 The target pipeline for a pull request is:
@@ -93,8 +93,7 @@ Lint → Build → Unit tests → Integration tests → Contract tests → Secur
 ```
 
 What is not in CI yet: **Android and iOS workflows.** They are added when those applications are
-scaffolded. The web app's end-to-end tests (Playwright) join `web.yml` with the sign-in flow, which
-is the first thing there is to test end to end.
+scaffolded.
 
 Path filters don't trigger on a branch's first push. The contract and backend workflows can also be
 started manually (`workflow_dispatch`), for example with
@@ -109,7 +108,7 @@ Every check must pass before merging ([git.md](git.md)).
 | Setting | Value |
 |---|---|
 | Changes only through pull requests | yes; 0 required approvals, because there is a single maintainer |
-| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Lint, build and test the web app` (Web)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
+| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Lint, build and test the web app` and `Web end-to-end tests` (Web)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
 | Branch must be up to date before merging | yes |
 | Conversations must be resolved | yes |
 | Force pushes and deletion | blocked |

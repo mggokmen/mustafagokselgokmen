@@ -68,6 +68,30 @@ login shortcut.
   - expired token
   - `email_verified` is `false`
 
+## Web
+
+The web app is a backend-for-frontend, so what matters is what the **browser** ends up holding and
+where it is allowed to go. Those are end-to-end questions, and `frontend/nextjs/e2e/run-tests.sh`
+answers them: it starts PostgreSQL, the API and a mock identity provider in Docker, builds the web
+app the way it is deployed, and drives a real browser through it.
+
+Every sign-in change keeps these covered:
+
+| Case | What it proves |
+|---|---|
+| A protected page without a session | Redirect to `/login`, carrying `returnTo` |
+| A full sign-in | The visitor lands where they were going, as themselves |
+| The session cookies | `HttpOnly`, `SameSite=Lax`, `Path=/`, and invisible to `document.cookie` |
+| A callback with no sign-in cookie | Refused, with a message the visitor can act on |
+| A callback whose `state` isn't the one issued | Refused, and no session is created |
+| A missing access token with a valid refresh token | Renewed silently; the refresh token rotates |
+| Sign-out | Both cookies gone, and the session no longer works |
+| A POST to a protected route | Guarded too, because a Server Action is a POST to its own page |
+
+Unit tests (Vitest) cover what doesn't need a browser: the API client, the error mapping, the
+cookie attributes and `returnTo` validation. Async Server Components are not unit-tested; the
+Next.js guidance is to cover them end to end, which is what the table above does.
+
 ## Clients
 
 - **ViewModel tests** check the sequence of UI states for success, for each error type, and for a

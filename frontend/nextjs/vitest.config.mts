@@ -18,6 +18,7 @@ export default defineConfig({
     // and the React plugin when the first component arrives; async Server Components are covered
     // by end-to-end tests instead, as the Next.js testing guide recommends.
     environment: "node",
+    setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.ts"],
   },
 });

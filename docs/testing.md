@@ -88,6 +88,16 @@ Every sign-in change keeps these covered:
 | Sign-out | Both cookies gone, and the session no longer works |
 | A POST to a protected route | Guarded too, because a Server Action is a POST to its own page |
 
+And for the contact flow:
+
+| Case | What it proves |
+|---|---|
+| Sending a message | It appears in the sender's own list, as `NEW` |
+| An empty form | A message per field, and nothing is sent |
+| A subject of only spaces | Refused, the way the contract's pattern requires |
+| A message containing markup | Shown as text; no element is created from it |
+| The sixth message in an hour | The API's 429 becomes a sentence saying when to try again, from `Retry-After` |
+
 Unit tests (Vitest) cover what doesn't need a browser: the API client, the error mapping, the
 cookie attributes and `returnTo` validation. Async Server Components are not unit-tested; the
 Next.js guidance is to cover them end to end, which is what the table above does.

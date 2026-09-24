@@ -77,9 +77,16 @@ src/
    - Redirects to `returnTo`, which must be a relative path.
 4. **`proxy.ts`:**
    - Redirects to `/login` when a protected route has no session cookie.
-   - Refreshes tokens: when the access token is missing or about to expire and a refresh token
-     exists, it calls `/auth/refresh` and sets the new cookies on the response. It reads `exp` only
-     to decide when to refresh; verifying the token is the backend's job.
+   - Refreshes tokens: when the access cookie is gone and a refresh token remains, it calls
+     `/auth/refresh`, puts the new token on the request so the page behind it uses it, and sets the
+     new cookies on the response. No token is ever parsed here; the access cookie is given a
+     lifetime slightly shorter than its token, so "missing" is the signal to refresh.
+   - **One refresh at a time.** A browser sends several requests at once — a page and the prefetch
+     of a link — and all of them arrive without an access cookie. They share a single exchange
+     (`lib/auth/refresh.ts`), because reusing a refresh token revokes the whole family
+     ([ADR-003](../decisions/003-authentication.md)) and would sign the visitor out.
+   - The sharing is per server process, like instance-local rate limiting: several instances would
+     each refresh once. That becomes a question when there is more than one instance to deploy.
 5. **Server Components can't set cookies,** so they never refresh tokens. On a 401 they call
    `redirect("/login")`.
 6. **Logout** is a Server Action. It calls `/auth/logout`, deletes both cookies, and redirects.

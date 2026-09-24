@@ -1,21 +1,6 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-const ACCESS_TOKEN = "access_token";
-const REFRESH_TOKEN = "refresh_token";
-const SIGN_IN = "sign_in";
-
-/**
- * The mock provider signs in without asking anything, so reaching /auth/google is the whole flow:
- * authorization request, callback, code exchange, and the backend's own token pair.
- */
-async function signIn(page: Page, returnTo = "/account"): Promise<void> {
-  await page.goto(`/auth/google?returnTo=${encodeURIComponent(returnTo)}`);
-  await page.waitForURL(returnTo);
-}
-
-async function cookieNames(context: BrowserContext): Promise<string[]> {
-  return (await context.cookies()).map((cookie) => cookie.name);
-}
+import { ACCESS_TOKEN, REFRESH_TOKEN, SIGN_IN, cookieNames, signIn } from "./support";
 
 test.beforeEach(async ({ context }) => {
   await context.clearCookies();

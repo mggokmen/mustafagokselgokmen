@@ -8,7 +8,7 @@ export const metadata = { title: "Contact" };
 export default async function ContactPage({ searchParams }: PageProps<"/contact">) {
   await requireUser("/contact");
   const { page } = await searchParams;
-  const messages = await listContactMessages(pageIndex(page));
+  const messages = await listContactMessages({ page: pageIndex(page), returnTo: "/contact" });
 
   return (
     <main className="flex flex-col gap-10">

@@ -10,6 +10,7 @@ POSTGRES_PASSWORD="$(openssl rand -hex 16)"
 NOTIFICATION_DB_PASSWORD="$(openssl rand -hex 16)"
 JWT_SECRET="$(openssl rand -base64 48)"
 export POSTGRES_PASSWORD NOTIFICATION_DB_PASSWORD JWT_SECRET
+export WEB_GOOGLE_CLIENT_ID=unused WEB_GOOGLE_CLIENT_SECRET=unused
 export GOOGLE_CLIENT_IDS=web-e2e
 
 # Absolute paths: the Playwright run below changes directory, and the trap still needs these.

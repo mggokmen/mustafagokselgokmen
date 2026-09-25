@@ -159,6 +159,18 @@ Node 24. Configuration comes from `.env.local`, copied from `.env.example`.
 Sign-in needs a Google OAuth client. To work without one, point `GOOGLE_ISSUER` at a mock provider,
 which is what `e2e/run-tests.sh` does.
 
+## Container
+
+- **Standalone output** (`output: "standalone"`): the image holds a server and the files Next traced,
+  not the sources and not a package manager.
+- **Configuration is read at runtime,** so the image built in CI is the image that runs anywhere.
+  The build is given no secrets at all.
+- **`/healthz`** answers for the container's health check. It says that this process is serving and
+  nothing more — no backend call — so a backend outage doesn't get the web app restarted.
+- **`PORT` and `HOSTNAME`** are the server's own variables; the container sets `HOSTNAME=0.0.0.0` so
+  it listens outside itself.
+- Run it in the stack with `docker compose up --build web`, or from source with `npm run dev`.
+
 ## Tests
 
 - **Vitest runs in a Node environment**, because everything tested here runs on the server. The

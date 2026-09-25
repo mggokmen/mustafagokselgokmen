@@ -79,6 +79,22 @@ services:
       kafka:
         condition: service_healthy
 
+  web:
+    build:
+      context: .
+      dockerfile: frontend/nextjs/Dockerfile
+    environment:
+      # The browser calls this app, and this app calls the API over the network below.
+      API_BASE_URL: http://api:8080
+      APP_URL: ${WEB_APP_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${WEB_GOOGLE_CLIENT_ID:?}
+      GOOGLE_CLIENT_SECRET: ${WEB_GOOGLE_CLIENT_SECRET:?}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
   notification:
     build:
       context: .

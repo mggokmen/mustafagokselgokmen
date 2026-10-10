@@ -23,6 +23,8 @@ flowchart TB
     android[Android app] --> api
     ios[iOS app] --> api
     api[REST API<br/>Spring Boot · Go · .NET · FastAPI] --> db[(PostgreSQL)]
+    api --> kafka[[Kafka]]
+    kafka --> notification[Notification service]
     contract[[OpenAPI contract]] -.-> api
     contract -.-> web
     contract -.-> android
@@ -35,6 +37,9 @@ flowchart TB
   token for the API's own JWT access token and refresh token.
 - **Layered backend:** Controller → Service → Repository → Database
 - **MVVM on mobile:** View → ViewModel → Repository → API
+- **Events, not background threads.** Sending a message records an event in the same transaction.
+  A separate notification service consumes it, with retries, a dead-letter topic and a database of
+  its own.
 
 More: [Architecture](docs/architecture.md)
 
@@ -42,7 +47,7 @@ More: [Architecture](docs/architecture.md)
 
 | Application | Stack | Path | Status |
 |---|---|---|---|
-| Web | Next.js, React, TypeScript | [`frontend/nextjs`](frontend/nextjs) | Planned |
+| Web | Next.js, React, TypeScript | [`frontend/nextjs`](frontend/nextjs) | In progress |
 | Android | Kotlin, Jetpack Compose | [`mobile/android`](mobile/android) | Planned |
 | iOS | Swift, SwiftUI | [`mobile/ios`](mobile/ios) | Planned |
 
@@ -51,6 +56,7 @@ More: [Architecture](docs/architecture.md)
 | Backend | Stack | Path | Status |
 |---|---|---|---|
 | Spring Boot | Java 21, Spring Boot, Spring Data JPA | [`backend/spring-boot`](backend/spring-boot) | In progress |
+| Notification service (event consumer, not an API) | Java 21, Spring Boot, Spring for Apache Kafka | [`backend/notification-service`](backend/notification-service) | In progress |
 | Go | — | `backend/go` | Planned |
 | .NET | — | `backend/dotnet` | Planned |
 | FastAPI | — | `backend/fastapi` | Planned |
@@ -61,7 +67,7 @@ More: [Architecture](docs/architecture.md)
 |---|---|
 | API contract | OpenAPI 3.0.3 |
 | Identity | Sign in with Google (OpenID Connect) |
-| Backend | Java, Spring Boot, Spring Security (JWT), Flyway, PostgreSQL |
+| Backend | Java, Spring Boot, Spring Security (JWT), Flyway, PostgreSQL, Kafka |
 | Web | Next.js, React, TypeScript, Tailwind CSS |
 | Android | Kotlin, Jetpack Compose, Hilt, Retrofit, Coroutines, Flow, Credential Manager |
 | iOS | Swift, SwiftUI, async/await, URLSession, Keychain |
@@ -93,9 +99,10 @@ Prerequisites:
 Run the local stack:
 
 ```bash
-cp .env.example .env          # then set POSTGRES_PASSWORD
-docker compose up --build     # starts PostgreSQL and the API at http://localhost:8080
+cp .env.example .env          # then fill in the required values it lists
+docker compose up --build     # PostgreSQL, Kafka, the API on 8080, the web app on 3000
 curl http://localhost:8080/actuator/health
+curl http://localhost:3000/healthz
 ```
 
 To develop the backend from source, see [Build and Run](AGENTS.md#build-and-run).
@@ -130,6 +137,7 @@ More: [API standards](docs/api.md)
 
 - [Development guide](AGENTS.md)
 - [Architecture](docs/architecture.md)
+- [Notification service](docs/backend/notification-service.md)
 - [API standards](docs/api.md)
 - [Database standards](docs/database.md)
 - [Security standards](docs/security.md)

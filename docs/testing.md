@@ -23,10 +23,13 @@
 
 ## Test identity provider
 
-Sign-in is tested without Google. Automated tests start a local mock OpenID Connect provider, such
-as `mock-oauth2-server`. The provider signs ID tokens for a test `USER` and a test `ADMIN`. The
-backend is pointed at it through `GOOGLE_ISSUERS` and `GOOGLE_JWKS_URI`
-([security.md](security.md#test-identity-provider)).
+Sign-in is tested without Google. The backend is pointed at a local identity provider through
+`GOOGLE_ISSUERS` and `GOOGLE_JWKS_URI` ([security.md](security.md#test-identity-provider)).
+
+| Tests | Identity provider |
+|---|---|
+| Spring Boot integration tests | `TestIdentityProvider`: an in-process RSA key that signs ID tokens, with its key set served by the JDK's HTTP server |
+| Contract tests (any backend) | [`mock-oauth2-server`](https://github.com/navikt/mock-oauth2-server) in Docker. `contract/tests/mock-oidc.json` defines a test `USER`, an `ADMIN` and a user whose email isn't verified. |
 
 This means the backend's real verification code runs in every test. No backend contains a test-only
 login shortcut.
@@ -35,6 +38,18 @@ login shortcut.
 
 - **Database:** use Testcontainers with `@ServiceConnection`. Never H2, and never any other stand-in
   for PostgreSQL.
+- **Kafka:** the publishing tests run against a broker in Testcontainers, the same image as the
+  development stack. A test that consumes takes the address from the container, because
+  `@ServiceConnection` configures the application rather than setting a property.
+- **Consumers** are tested the same way, from the outside: the test publishes a record exactly as
+  the API does, then asserts on what the consumer did. Every consumer covers, at least:
+  - the event is handled
+  - the same event delivered twice is handled once
+  - a record that can never be read is dead-lettered without a retry
+  - a failure that persists is retried the configured number of times, is then dead-lettered, and
+    leaves nothing recorded as handled
+  - An outgoing call, such as sending a notification, is behind an interface. The test injects an
+    implementation that records what it was asked to do and fails on demand.
 - **`@WebMvcTest`** proves the HTTP layer:
   - status codes
   - the `Location` header
@@ -53,10 +68,68 @@ login shortcut.
   - expired token
   - `email_verified` is `false`
 
+## Web
+
+The web app is a backend-for-frontend, so what matters is what the **browser** ends up holding and
+where it is allowed to go. Those are end-to-end questions, and `frontend/nextjs/e2e/run-tests.sh`
+answers them: it starts PostgreSQL, the API and a mock identity provider in Docker, builds the web
+app the way it is deployed, and drives a real browser through it.
+
+Every sign-in change keeps these covered:
+
+| Case | What it proves |
+|---|---|
+| A protected page without a session | Redirect to `/login`, carrying `returnTo` |
+| A full sign-in | The visitor lands where they were going, as themselves |
+| The session cookies | `HttpOnly`, `SameSite=Lax`, `Path=/`, and invisible to `document.cookie` |
+| A callback with no sign-in cookie | Refused, with a message the visitor can act on |
+| A callback whose `state` isn't the one issued | Refused, and no session is created |
+| A missing access token with a valid refresh token | Renewed silently; the refresh token rotates |
+| Sign-out | Both cookies gone, and the session no longer works |
+| A POST to a protected route | Guarded too, because a Server Action is a POST to its own page |
+
+And for the contact flow:
+
+| Case | What it proves |
+|---|---|
+| Sending a message | It appears in the sender's own list, as `NEW` |
+| An empty form | A message per field, and nothing is sent |
+| A subject of only spaces | Refused, the way the contract's pattern requires |
+| A message containing markup | Shown as text; no element is created from it |
+| The sixth message in an hour | The API's 429 becomes a sentence saying when to try again, from `Retry-After` |
+
+And for the admin views:
+
+| Case | What it proves |
+|---|---|
+| An admin opens the list | Messages they did not send are there, with their author |
+| Moving a message | `NEW` → `IN_PROGRESS` → `RESOLVED`, and only a reopen after that |
+| The buttons offered | Only the moves the workflow allows; no way to ask for one it doesn't |
+| A status filter | Narrows the list, stays in the URL, survives a reload |
+| Two admins, one message | The second change carries a stale `version`, is refused with 409, overwrites nothing, and the list shown afterwards is the backend's |
+| A `USER` opening the admin area | Not found, and the backend refuses them regardless |
+
+**Identities:** the tests need a `USER` and an `ADMIN`, and a second user whose messages the admin
+did not write. The web app is started several times, on different ports, and the mock provider
+answers each address with a different account. The application is the same build with the same
+configuration in each case: nothing about the tests reaches the app, and the roles come from the
+backend, in the tokens it issues.
+
+**Keep destructive tests to themselves.** The test that exhausts the hourly message limit uses an
+account no other test depends on. A test that uses up a quota, or revokes something, must not be
+able to break the ones that follow.
+
+Unit tests (Vitest) cover what doesn't need a browser: the API client, the error mapping, the
+cookie attributes and `returnTo` validation. Async Server Components are not unit-tested; the
+Next.js guidance is to cover them end to end, which is what the table above does.
+
 ## Clients
 
 - **ViewModel tests** check the sequence of UI states for success, for each error type, and for a
   retry.
+- **Rate limits** are verified by backend integration tests, which set low limits of their own and
+  move the clock to reach the next window. The contract stack raises the limits instead, so the
+  hundreds of requests Schemathesis generates aren't rejected with 429.
 - **Token-refresh tests** prove two things:
   - several concurrent 401 responses trigger exactly one refresh
   - a failed refresh logs the user out
@@ -75,13 +148,17 @@ are **exactly the same for every backend**, with no changes for any particular o
 2. **Breaking-change check:** `oasdiff breaking <develop-version> contract/openapi.yaml`.
    A breaking change fails CI unless it is deliberately versioned (see
    [api.md](api.md#compatibility)).
-3. **Conformance:**
-   `uvx schemathesis run contract/openapi.yaml --url http://localhost:8080`
-   - Run it against a seeded database, with a token issued through the test identity provider.
-   - Schemathesis generates requests from the contract and checks that every response conforms to
-     it.
-4. **Scenarios:**
-   `hurl --test --variable base_url=http://localhost:8080 contract/tests/*.hurl`
+3. **Conformance:** Schemathesis generates requests from the contract, including invalid ones, and
+   checks every response against it: status codes, schemas, content types, authentication and
+   unsupported methods.
+   - `contract/tests/schemathesis_hooks.py` signs in through the mock identity provider, so
+     protected operations are called with a real access token.
+   - **Each run explores different inputs.** A change that passed on a pull request can still fail
+     on `develop`, because that run generated something new. That is the tool doing its job: fix
+     forward, with a regression test for the case it found.
+   - Every operation in the contract is tested. While a feature is unimplemented, restrict the run
+     with `--include-tag`, so unimplemented operations don't report undocumented 404s.
+4. **Scenarios:** `contract/tests/*.hurl`, run with Hurl.
    - These are hand-written HTTP scenarios, stored as plain text, for behavior the schema can't
      express:
      - sign-in through the test identity provider: the user is created on the first sign-in and
@@ -96,6 +173,16 @@ are **exactly the same for every backend**, with no changes for any particular o
    - The scenarios are deliberately written in no backend's language, so they run unchanged against
      every implementation.
 
+Run steps 3 and 4 with **`contract/run-tests.sh`** (requires Docker). The script:
+
+1. starts an isolated Compose project, layered with `contract/compose.contract.yml`, containing
+   PostgreSQL, the API built from the working tree and the mock identity provider, with no ports on
+   the host
+2. runs Hurl, then Schemathesis
+3. removes the project, printing the API log on failure
+
+CI runs the same script in the `Contract tests` job.
+
 ## Continuous integration
 
 The workflows and their stages are described in [devops.md](devops.md#continuous-integration). This
@@ -103,6 +190,7 @@ section lists which tests CI must run.
 
 - **One job per application:**
   - Backend: unit and integration tests
+  - Notification service: consumer tests against PostgreSQL and Kafka
   - Web: unit tests, build, Playwright
   - Android: unit tests
   - iOS: build and tests, on a macOS runner

@@ -20,8 +20,9 @@ Browser --(HttpOnly cookies)--> Next.js server --(Authorization: Bearer)--> Back
   Server Component, a Server Action or a Route Handler.
 - **`src/lib/api/api-client.ts` is the only module that creates the `openapi-fetch` client.** It:
   - is marked `server-only`
-  - reads the access token from cookies
-  - turns ProblemDetail responses into a typed `ApiError`
+  - takes the access token from the session (`lib/auth`), which read it from the cookies
+  - exposes `unwrap()`, which returns the body of a successful call and throws a typed `ApiError`
+    for anything else, so a failed request is never mistaken for an empty result
 - **Components never call `fetch` to get backend data.**
 - **Every environment variable is server-only:** `API_BASE_URL`, `APP_URL`, `GOOGLE_CLIENT_ID`,
   `GOOGLE_CLIENT_SECRET`. None of them has the `NEXT_PUBLIC_` prefix.
@@ -37,7 +38,7 @@ src/
 │   ├── auth/google/callback/route.ts
 │   ├── (app)/layout.tsx             signed-in area
 │   ├── (app)/contact/page.tsx       contact form + the user's own messages
-│   ├── (app)/admin/messages/...     admin views (after the MVP)
+│   ├── (app)/admin/messages/page.tsx  every message, filtered, with the status workflow
 │   ├── error.tsx
 │   └── not-found.tsx
 ├── features/contact/                components, actions.ts (Server Actions), schemas.ts (zod)
@@ -76,12 +77,33 @@ src/
    - Redirects to `returnTo`, which must be a relative path.
 4. **`proxy.ts`:**
    - Redirects to `/login` when a protected route has no session cookie.
-   - Refreshes tokens: when the access token is missing or about to expire and a refresh token
-     exists, it calls `/auth/refresh` and sets the new cookies on the response. It reads `exp` only
-     to decide when to refresh; verifying the token is the backend's job.
+   - Refreshes tokens: when the access cookie is gone and a refresh token remains, it calls
+     `/auth/refresh`, puts the new token on the request so the page behind it uses it, and sets the
+     new cookies on the response. No token is ever parsed here; the access cookie is given a
+     lifetime slightly shorter than its token, so "missing" is the signal to refresh.
+   - **One refresh at a time.** A browser sends several requests at once — a page and the prefetch
+     of a link — and all of them arrive without an access cookie. They share a single exchange
+     (`lib/auth/refresh.ts`), because reusing a refresh token revokes the whole family
+     ([ADR-003](../decisions/003-authentication.md)) and would sign the visitor out.
+   - The sharing is per server process, like instance-local rate limiting: several instances would
+     each refresh once. That becomes a question when there is more than one instance to deploy.
 5. **Server Components can't set cookies,** so they never refresh tokens. On a 401 they call
    `redirect("/login")`.
 6. **Logout** is a Server Action. It calls `/auth/logout`, deletes both cookies, and redirects.
+
+## Admin views
+
+- **Who may see them is the backend's answer.** The page asks `/auth/me` and shows anyone who
+  isn't an `ADMIN` a **not found**, rather than a "not allowed": a page they may not use is not one
+  whose existence they need confirmed. The backend refuses them with 403 regardless of what this
+  app renders.
+- **The status buttons offer only the moves the workflow allows**
+  ([architecture.md](../architecture.md#message-status)), so the admin is not invited to ask for
+  something that will be refused. The backend still decides.
+- **Optimistic concurrency is carried by the form.** Each message's `version` is a hidden field, so
+  a change is made against the message as it was displayed. A 409 means someone got there first, or
+  the move isn't allowed: the list is revalidated and the admin is told, and nothing is overwritten.
+- **Filters live in the URL** (`?status=NEW`), so a filtered list can be linked to and reloaded.
 
 ## Contact form
 
@@ -120,3 +142,44 @@ a nonce-based Content-Security-Policy.
 
 `npm run gen:api` runs `openapi-typescript ../../contract/openapi.yaml -o src/lib/api/schema.d.ts`.
 It runs automatically through the `predev` and `prebuild` scripts. The output is gitignored.
+
+## Commands
+
+Node 24. Configuration comes from `.env.local`, copied from `.env.example`.
+
+| Task | Command |
+|---|---|
+| Install | `npm install` |
+| Develop | `npm run dev` |
+| Unit tests | `npm test` (`npm run test:watch` while working) |
+| End-to-end tests | `e2e/run-tests.sh` from anywhere (requires Docker) |
+| Lint, format, types | `npm run lint`, `npm run format`, `npm run typecheck` |
+| Build | `npm run build` |
+
+Sign-in needs a Google OAuth client. To work without one, point `GOOGLE_ISSUER` at a mock provider,
+which is what `e2e/run-tests.sh` does.
+
+## Container
+
+- **Standalone output** (`output: "standalone"`): the image holds a server and the files Next traced,
+  not the sources and not a package manager.
+- **Configuration is read at runtime,** so the image built in CI is the image that runs anywhere.
+  The build is given no secrets at all.
+- **`/healthz`** answers for the container's health check. It says that this process is serving and
+  nothing more — no backend call — so a backend outage doesn't get the web app restarted.
+- **`PORT` and `HOSTNAME`** are the server's own variables; the container sets `HOSTNAME=0.0.0.0` so
+  it listens outside itself.
+- Run it in the stack with `docker compose up --build web`, or from source with `npm run dev`.
+
+## Tests
+
+- **Vitest runs in a Node environment**, because everything tested here runs on the server. The
+  config maps `server-only` to React's empty module, so server modules can be tested the way the
+  server loads them.
+- **Async Server Components are not unit-tested.** The Next.js testing guide recommends end-to-end
+  tests for them, and that is where they are covered.
+- **What unit tests are for:** the API client, error mapping, session and cookie helpers, and
+  anything that decides something (redirects, validation, `returnTo`).
+- **What end-to-end tests are for:** everything about a session that only a browser can show —
+  which cookies it holds, what they are marked with, and where it is allowed to go. The cases are
+  listed in [testing.md](../testing.md#web).

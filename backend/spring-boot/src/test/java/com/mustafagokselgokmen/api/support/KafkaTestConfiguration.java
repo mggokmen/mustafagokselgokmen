@@ -1,18 +1,18 @@
-package com.mustafagokselgokmen.api;
+package com.mustafagokselgokmen.api.support;
 
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
-import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.kafka.KafkaContainer;
 import org.testcontainers.utility.DockerImageName;
 
+/** A real broker for the tests that need one. Same image as docker-compose.yml. */
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
+public class KafkaTestConfiguration {
 
-  // Same major version as docker-compose.yml and CI (docs/database.md).
   @Bean
   @ServiceConnection
-  PostgreSQLContainer postgresContainer() {
-    return new PostgreSQLContainer(DockerImageName.parse("postgres:18"));
+  KafkaContainer kafkaContainer() {
+    return new KafkaContainer(DockerImageName.parse("apache/kafka:4.3.1"));
   }
 }

@@ -18,10 +18,11 @@ environment-specific is baked into an image.
 
 ### Images
 
-- **One multi-stage Dockerfile per deployable application,** kept next to its code, for example
-  `backend/spring-boot/Dockerfile`.
-- **The build context is the repository root,** because builds read `contract/openapi.yaml`.
-  `.dockerignore` keeps everything else out of the context, including every `.env` file.
+- **One multi-stage Dockerfile per deployable application,** kept next to its code:
+  `backend/spring-boot/`, `backend/notification-service/` and `frontend/nextjs/`.
+- **The build context is the repository root:** the API's build reads `contract/openapi.yaml`, and
+  one `.dockerignore` then covers every image. It keeps everything else out of the context,
+  including every `.env` file.
 - **Build stage:**
   - Uses a JDK image.
   - Dependencies are resolved in their own cached layer, then the application is built.
@@ -31,14 +32,26 @@ environment-specific is baked into an image.
   - Uses the Spring Boot layered jar, so dependency layers are rebuilt only when dependencies change.
   - Runs as a non-root user.
   - Has a `HEALTHCHECK` against `/actuator/health`.
-- **Base images** are pinned to a major version (`eclipse-temurin:21-jre`, `postgres:18`).
-  Dependabot proposes updates.
+- **The web runtime stage** ships Next.js's standalone output: a server and the files it traced,
+  without the sources or a package manager. **npm and corepack are removed**, because a runtime has
+  no use for them and their bundled dependencies are the image's largest source of reported
+  vulnerabilities.
+- **The build takes no configuration.** If a build ever needed a secret to succeed, the same image
+  could not run in every environment, so that would be the bug.
+- **Base images** are pinned to a major version (`eclipse-temurin:21-jre`, `node:24-alpine`,
+  `postgres:18`). Dependabot proposes updates.
 - **Logging:** containers log JSON; local runs log plain text ([observability.md](observability.md)).
 
 ### Docker Compose
 
-- **`docker-compose.yml`** at the repository root defines the local stack: `postgres` and `api`.
-  The web app joins it once it's scaffolded.
+- **`docker-compose.yml`** at the repository root defines the local stack: `postgres`, `kafka`,
+  `api`, `notification` and `web`. The web app can also run from source against the stack
+  (`npm run dev`), which is the usual way to work on it.
+- **The contract test stack leaves Kafka and the notification service out** and sets
+  `OUTBOX_TARGET=log`, because those tests check the API, not the broker.
+- **Each service has its own database.** `docker/postgres/init/` creates the notification service's
+  database and role when the data volume is empty. An existing stack picks it up after
+  `docker compose down -v`.
 - **Only containers with a real purpose.** For example, Redis is not added until a feature needs it
   ([ADR-007](decisions/007-containers-and-ci-cd.md)).
 - **Port:** PostgreSQL is published on host port **5433**, so it doesn't clash with a locally
@@ -47,7 +60,7 @@ environment-specific is baked into an image.
 | Command | What it does |
 |---|---|
 | `docker compose up -d postgres` | Starts the database only, for running the API from source |
-| `docker compose up --build` | Starts the database and the API |
+| `docker compose up --build` | Starts the database, the broker, the API and the notification service |
 | `docker compose down` | Stops the stack and keeps the data. Add `-v` to also delete the database volume. |
 
 ## Configuration and secrets
@@ -65,13 +78,18 @@ environment-specific is baked into an image.
 
 ## Continuous integration
 
-Workflows live in `.github/workflows/`. Each one runs on pull requests and on pushes to `main` and
-`develop`, and only when the files it covers change (path filters).
+Workflows live in `.github/workflows/`.
+- **Pull requests** run every workflow, whichever files changed. That way each required check
+  always reports a result (see [Branch protection](#branch-protection)).
+- **Pushes to `main` and `develop`** run a workflow only when the files it covers change (path
+  filters).
 
 | Workflow | Stages |
 |---|---|
 | `contract.yml` | 1. Lint (Redocly)<br>2. Breaking-change check against the target branch (oasdiff; pull requests only) |
-| `backend-spring-boot.yml` | 1. Format check (Spotless)<br>2. Build, including code generation<br>3. Unit and integration tests (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy) |
+| `backend-spring-boot.yml` | 1. Format check (Spotless)<br>2. Build, including code generation<br>3. Unit and integration tests (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy)<br>6. Contract tests: Hurl and Schemathesis via `contract/run-tests.sh` |
+| `backend-notification-service.yml` | 1. Format check (Spotless)<br>2. Build<br>3. Consumer tests against PostgreSQL and Kafka (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy) |
+| `web.yml` | 1. Generate the API types from the contract<br>2. Format check (Prettier)<br>3. Lint (ESLint)<br>4. Type check (`tsc`)<br>5. Unit tests (Vitest)<br>6. Build<br>7. Docker image build<br>8. Image vulnerability scan (Trivy)<br>9. End-to-end tests: a real browser against the API and a mock identity provider (`frontend/nextjs/e2e/run-tests.sh`) |
 | `codeql.yml` | Static security analysis (CodeQL) of the Java code and the workflow files. Also runs weekly. |
 
 The target pipeline for a pull request is:
@@ -80,17 +98,30 @@ The target pipeline for a pull request is:
 Lint → Build → Unit tests → Integration tests → Contract tests → Security scan → Docker build
 ```
 
-What is not in CI yet:
-- **Contract tests** (Schemathesis + Hurl, [testing.md](testing.md#contract-tests)) join the backend
-  workflow once the endpoints are implemented.
-- **Web, Android and iOS workflows** are added when those applications are scaffolded.
+What is not in CI yet: **Android and iOS workflows.** They are added when those applications are
+scaffolded.
 
 Path filters don't trigger on a branch's first push. The contract and backend workflows can also be
 started manually (`workflow_dispatch`), for example with
 `gh workflow run backend-spring-boot.yml --ref develop`.
 
-Every check must pass before merging ([git.md](git.md)). In branch protection for `main` and
-`develop`, configure these checks as required status checks.
+Every check must pass before merging ([git.md](git.md)).
+
+## Branch protection
+
+`main` and `develop` are protected with these settings:
+
+| Setting | Value |
+|---|---|
+| Changes only through pull requests | yes; 0 required approvals, because there is a single maintainer |
+| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Lint, build and test the web app`, `Web image and vulnerability scan` and `Web end-to-end tests` (Web)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
+| Branch must be up to date before merging | yes |
+| Conversations must be resolved | yes |
+| Force pushes and deletion | blocked |
+| Rules apply to administrators | yes |
+
+When a workflow or job is added or renamed, update this list and the branch protection settings in
+the same pull request.
 
 ## Continuous delivery
 
@@ -98,7 +129,7 @@ CI and CD are separate. CI proves that a change is correct; CD publishes a relea
 
 | Trigger | Result |
 |---|---|
-| Tag `vX.Y.Z` on `main` (`release.yml`) | `ghcr.io/<owner>/mustafagokselgokmen-api`, tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
+| Tag `vX.Y.Z` on `main` (`release.yml`) | One image per deployable — `mustafagokselgokmen-api`, `mustafagokselgokmen-notification` and `mustafagokselgokmen-web` under `ghcr.io/<owner>/` — each tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
 
 Deployment isn't configured yet. Once a hosting target is chosen, a `deploy` job runs after the
 image is published:

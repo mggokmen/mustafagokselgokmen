@@ -13,7 +13,7 @@ and [testing.md](../testing.md).
 - Spring Data JPA (Hibernate), PostgreSQL, Flyway, Bean Validation
 - Spring Security with OAuth2 Resource Server (Nimbus JOSE for JWT)
 - openapi-generator-maven-plugin
-- Bucket4j for rate limiting
+- Bucket4j and Caffeine for rate limiting
 - No Lombok: the contract generates the API models, and there are only a few entities.
 
 ## Package layout (bounded contexts)
@@ -29,18 +29,27 @@ src/main/java/com/mustafagokselgokmen/api/
 │   ├── AuthService.java               Google sign-in, refresh, logout
 │   ├── GoogleIdTokenVerifier.java     verifies Google ID tokens
 │   ├── TokenService.java              issues access tokens and refresh tokens
+│   ├── TokenConfig.java               access token encoder and decoder (HS256)
 │   ├── RefreshToken.java              @Entity
-│   └── RefreshTokenRepository.java
+│   ├── RefreshTokenRepository.java
+│   ├── IdentityProperties.java        validated configuration (JWT_SECRET, GOOGLE_*, ADMIN_EMAILS)
+│   └── AuthenticatedUser.java         user ID of the current request
 ├── contact/                           contact messages
 │   ├── ContactMessageController.java  implements the generated ContactMessagesApi
 │   ├── ContactMessageService.java
 │   ├── ContactMessageRepository.java
+│   ├── ContactMessageSpecifications.java  filters applied in the query
 │   ├── ContactMessage.java            @Entity that enforces its own status transitions
 │   ├── ContactMessageStatus.java      enum with the allowed transitions
+│   ├── ContactMessageText.java        makes request text safe to store
 │   └── ContactMessageMapper.java      entity <-> generated models
 └── common/
-    ├── error/                         GlobalExceptionHandler, domain exceptions
-    └── config/                        SecurityConfig, JPA auditing, rate limiting
+    ├── error/                         GlobalExceptionHandler, ProblemErrorController,
+    │                                  SecurityProblemHandler, ErrorCode
+    ├── outbox/                        OutboxWriter, OutboxPublisher, OutboxEventTarget (ADR-008)
+    ├── ratelimit/                     RateLimiter, interceptor, limits
+    ├── persistence/                   AuditedEntity (UUID v7 id, audit timestamps)
+    └── config/                        SecurityConfig, JacksonConfig, PersistenceConfig
 ```
 
 This is a lightweight use of DDD: bounded contexts and domain rules, without extra layers.
@@ -98,7 +107,27 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 - **Timestamps:** `Instant`, with `createdAt` and `updatedAt` filled in by JPA auditing.
 - **Versioning:** `ContactMessage` has `@Version`. Before changing the status, the service compares
   the `version` in the request with the entity's version. A mismatch throws `ConflictException`.
+  The service flushes before mapping the response, so the client gets the version it must send next.
+- **Concurrent first sign-ins** of the same person are serialized with a PostgreSQL advisory lock;
+  otherwise both requests insert the user and the second one fails on the unique index.
 - **Associations** are `LAZY`. No cascades.
+
+## Events
+
+- A service that changes something and needs the world to know calls `OutboxWriter.record(...)`
+  **inside its own transaction**. The writer requires one (`Propagation.MANDATORY`).
+- `OutboxPublisher` is a scheduled, transactional method. It locks a batch with
+  `FOR UPDATE SKIP LOCKED`, publishes it and marks it published.
+- Business code never talks to a broker; it only records events ([ADR-008](../decisions/008-transactional-outbox.md)).
+- **Where events go** is one setting, `OUTBOX_TARGET`:
+
+| Value | Target |
+|---|---|
+| `kafka` | `events.<aggregate-type>`, keyed by aggregate id, with `event-id`, `event-type` and `aggregate-type` headers ([ADR-009](../decisions/009-kafka-for-events.md)) |
+| `log` | a log line, for environments without a broker, such as the contract tests |
+
+- Tests set a long poll interval and call the publisher themselves, so they see exactly what they
+  caused.
 
 ## Validation
 
@@ -109,8 +138,10 @@ and the models are in `com.mustafagokselgokmen.api.generated.model`.
 
 ## Error handling
 
-A single `@RestControllerAdvice` extending `ResponseEntityExceptionHandler` writes the ProblemDetail
-format from [api.md](../api.md#errors):
+A single `@RestControllerAdvice` extending `ResponseEntityExceptionHandler` writes the error format
+from [api.md](../api.md#errors). Every error body is the **generated `Problem` model**, so its shape
+comes from the contract itself. Spring's own `ProblemDetail`s are converted in
+`createResponseEntity`.
 
 | Exception | Status | `code` |
 |---|---|---|
@@ -121,9 +152,16 @@ format from [api.md](../api.md#errors):
 | `RateLimitedException` | 429 | `RATE_LIMITED`, with `Retry-After` |
 | Any other exception | 500 | `INTERNAL_ERROR`, logged with its stack trace; the client gets a generic `detail` |
 
-Spring Security rejects unauthenticated and unauthorized requests before they reach the advice. A
-custom `AuthenticationEntryPoint` (401, `UNAUTHENTICATED`) and a custom `AccessDeniedHandler` (403,
-`FORBIDDEN`) write the same ProblemDetail format.
+Errors raised outside Spring MVC reach the same format by other routes:
+
+| Where the error comes from | How it reaches the `Problem` format |
+|---|---|
+| Spring Security, for unauthenticated and unauthorized requests | `SecurityProblemHandler`, the `AuthenticationEntryPoint` and `AccessDeniedHandler`, passes the exception to the advice. 401 responses include `WWW-Authenticate: Bearer`. |
+| The servlet container, for example a rejected method | `ProblemErrorController` replaces Spring Boot's default `/error` response. Error dispatches are permitted in the security chain, so a 405 isn't turned into a 401. |
+
+JSON handling is strict:
+- Optional fields are omitted instead of being sent as `null` (`default-property-inclusion: non_null`).
+- A value of the wrong type is rejected with 400 instead of being converted (`JacksonConfig`).
 
 ## Security
 
@@ -152,8 +190,14 @@ custom `AuthenticationEntryPoint` (401, `UNAUTHENTICATED`) and a custom `AccessD
 - **Authorization:**
   - `SecurityFilterChain` declares which routes are public and which require authentication.
   - Role rules and ownership rules use `@PreAuthorize` on service methods.
-- **Rate limiting:** Bucket4j buckets kept in memory (the backend runs as a single instance), keyed
-  by IP for `/auth` endpoints and by user ID for sending messages.
+- **Rate limiting** (`common/ratelimit`):
+  - Bucket4j token buckets, held in a Caffeine cache that expires unused keys, so memory can't grow
+    without bound.
+  - A `HandlerInterceptor` counts the request before the controller runs and throws
+    `RateLimitedException`, which the advice turns into 429 with `Retry-After`.
+  - Bucket4j reads time through the application's `Clock` bean, so tests move the window instead of
+    sleeping.
+  - The limits and their consequences are in [security.md](../security.md#rate-limiting).
 
 ## Configuration
 

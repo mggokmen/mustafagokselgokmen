@@ -9,10 +9,52 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+  jackson:
+    # Optional fields are absent, not null (docs/api.md#request-and-response-models).
+    default-property-inclusion: non_null
   jpa:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      # Every replica must acknowledge, and a retry must not duplicate the record.
+      acks: all
+      properties:
+        enable.idempotence: true
+
+app:
+  # Events are written with the change that produced them and published from here (ADR-008).
+  outbox:
+    enabled: ${OUTBOX_PUBLISHER_ENABLED:true}
+    batch-size: 100
+    poll-interval: 1s
+    # Where published events go: "kafka", or "log" where no broker is available.
+    target: ${OUTBOX_TARGET:log}
+    topic-prefix: events
+
+  # Requests per client IP, counted by this instance (docs/security.md#rate-limiting).
+  rate-limit:
+    sign-in:
+      requests: ${RATE_LIMIT_SIGN_IN_REQUESTS:10}
+      per: 1m
+    refresh:
+      requests: ${RATE_LIMIT_REFRESH_REQUESTS:30}
+      per: 1m
+    # Keyed by user, not by IP.
+    contact-message:
+      requests: ${RATE_LIMIT_CONTACT_MESSAGE_REQUESTS:5}
+      per: 1h
+  identity:
+    jwt-secret: ${JWT_SECRET}
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d
+    admin-emails: ${ADMIN_EMAILS:}
+    google:
+      client-ids: ${GOOGLE_CLIENT_IDS}
+      issuers: ${GOOGLE_ISSUERS:https://accounts.google.com,accounts.google.com}
+      jwks-uri: ${GOOGLE_JWKS_URI:https://www.googleapis.com/oauth2/v3/certs}
 
 management:
   endpoints:

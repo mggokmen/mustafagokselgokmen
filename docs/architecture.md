@@ -9,6 +9,9 @@ flowchart TB
     android[Android app] -->|Bearer token| api
     ios[iOS app] -->|Bearer token| api
     api[Backend<br/>Spring Boot · Go · .NET · FastAPI] --> db[(PostgreSQL)]
+    api --> kafka[[Kafka]]
+    kafka --> notification[Notification service]
+    notification --> notificationdb[(PostgreSQL)]
     web -.->|sign-in| google[Google]
     android -.->|sign-in| google
     ios -.->|sign-in| google
@@ -25,6 +28,8 @@ flowchart TB
 - **Mobile apps call the backend directly** and keep their tokens in the platform's secure storage.
 - **Backends are interchangeable.** Every backend implements the same contract and passes the same
   tests, so any client can run against any backend.
+- **Work that follows a request runs elsewhere.** The API publishes events; the notification
+  service consumes them. No client waits for that work, and each service owns its own data.
 
 ## Domain
 
@@ -65,6 +70,16 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
+    outbox_events {
+        uuid id PK
+        varchar aggregate_type
+        uuid aggregate_id
+        varchar event_type
+        jsonb payload
+        timestamptz published_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
     refresh_tokens {
         uuid id PK
         uuid user_id FK
@@ -81,6 +96,47 @@ erDiagram
   identity.
 - **A message can't be edited after it is sent.** Only its status changes.
 - **`refresh_tokens`** makes token rotation and revocation possible.
+
+### Events
+
+Sending a message also records an event, in the same transaction:
+
+```mermaid
+flowchart LR
+    request[POST /contact-messages] --> tx
+    subgraph tx[One transaction]
+        message[(contact_messages)]
+        event[(outbox_events)]
+    end
+    tx --> publisher[Outbox publisher]
+    publisher --> kafka[[Kafka: events.contact-message]]
+    kafka --> notification[Notification service]
+    notification --> processed[(processed_events)]
+    notification -.->|attempts exhausted| dlt[[events.contact-message.dlt]]
+```
+
+The message and the event are stored together or not at all. A publisher drains the table
+afterwards, so a failure to publish never loses the event and never rolls back the request
+([ADR-008](decisions/008-transactional-outbox.md)).
+
+Events go to Kafka, keyed by the aggregate's id and carrying `event-id`, `event-type` and
+`aggregate-type` headers ([ADR-009](decisions/009-kafka-for-events.md)). Publishing is at least
+once, so consumers must be idempotent. Where no broker is available, such as the contract tests,
+the target writes a log line instead.
+
+### Consumers
+
+The notification service reads those events. It is a separate deployable with a database of its
+own, so the work that follows a contact message doesn't share the API's process, and the consumer
+can't read the API's tables ([ADR-010](decisions/010-event-consumer-resilience.md)).
+
+- **Handled once:** before notifying, it claims the event's id in `processed_events`. A second
+  delivery of the same event finds the id taken and does nothing.
+- **Retried, then set aside:** a failure that may recover is retried with a growing pause; one that
+  can't — a missing header, an unreadable body — goes straight to `events.contact-message.dlt`.
+
+The notification itself is a log line for now. What surrounds it is real, so adding email or push
+delivery is a change in one class.
 
 ### Message status
 
@@ -212,3 +268,6 @@ contract test suite unchanged.
 - [ADR-005: Mobile architecture](decisions/005-mobile-architecture.md)
 - [ADR-006: Sign in with Google](decisions/006-google-sign-in.md)
 - [ADR-007: Docker Compose and GitHub Actions](decisions/007-containers-and-ci-cd.md)
+- [ADR-008: Transactional outbox](decisions/008-transactional-outbox.md)
+- [ADR-009: Kafka as the event broker](decisions/009-kafka-for-events.md)
+- [ADR-010: Consumer resilience and idempotency](decisions/010-event-consumer-resilience.md)

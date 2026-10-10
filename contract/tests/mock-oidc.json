@@ -1,0 +1,44 @@
+{
+  "interactiveLogin": false,
+  "tokenCallbacks": [
+    {
+      "issuerId": "google",
+      "tokenExpiry": 600,
+      "requestMappings": [
+        {
+          "requestParam": "scope",
+          "match": "admin",
+          "claims": {
+            "sub": "contract-admin",
+            "aud": ["contract-tests"],
+            "email": "admin@example.com",
+            "email_verified": true,
+            "name": "Contract Admin"
+          }
+        },
+        {
+          "requestParam": "scope",
+          "match": "unverified",
+          "claims": {
+            "sub": "contract-unverified",
+            "aud": ["contract-tests"],
+            "email": "unverified@example.com",
+            "email_verified": false,
+            "name": "Unverified User"
+          }
+        },
+        {
+          "requestParam": "scope",
+          "match": "*",
+          "claims": {
+            "sub": "contract-user",
+            "aud": ["contract-tests"],
+            "email": "user@example.com",
+            "email_verified": true,
+            "name": "Contract User"
+          }
+        }
+      ]
+    }
+  ]
+}

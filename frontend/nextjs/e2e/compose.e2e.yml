@@ -29,7 +29,10 @@ services:
       OUTBOX_TARGET: log
       GOOGLE_CLIENT_IDS: web-e2e
       ADMIN_EMAILS: admin@example.com
-      GOOGLE_ISSUERS: http://localhost:18090/google
+      # One provider, reachable under two addresses: the browser and the app instances on the host
+      # use localhost, anything inside the network uses the service name. It signs with the same key
+      # either way, so the API accepts both spellings of the issuer.
+      GOOGLE_ISSUERS: http://localhost:18090/google,http://mock-oidc:8080/google
       GOOGLE_JWKS_URI: http://mock-oidc:8080/google/jwks
       # Every test signs in, and all of them reach the API from the web app's single address, so
       # they share one bucket (docs/security.md#rate-limiting). Sign-in rate limiting is covered by

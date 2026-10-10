@@ -64,6 +64,19 @@ updates:
       - dependency-name: eclipse-temurin
         update-types: ["version-update:semver-major"]
 
+  - package-ecosystem: docker
+    directory: /frontend/nextjs
+    target-branch: develop
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: chore
+      include: scope
+    ignore:
+      # Moving to a new major Node version changes the build, the image and CI together.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: docker-compose
     directory: /
     target-branch: develop

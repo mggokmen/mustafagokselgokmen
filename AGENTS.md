@@ -97,7 +97,7 @@ running anything.
 
 | Task | Command |
 |---|---|
-| Run the local stack (PostgreSQL, Kafka, API, notification service) | `docker compose up --build` |
+| Run the local stack (PostgreSQL, Kafka, API, notification service, web) | `docker compose up --build` |
 | Run only the database | `docker compose up -d postgres` |
 | Build and test the backend | `cd backend/spring-boot && ./mvnw verify` |
 | Run the backend from source | `cd backend/spring-boot && ./mvnw spring-boot:run` |
@@ -109,9 +109,11 @@ running anything.
 | Lint the API contract | `npx @redocly/cli lint contract/openapi.yaml` |
 | Run the contract tests (Hurl + Schemathesis, in Docker) | `contract/run-tests.sh` |
 
-The API listens on `http://localhost:8080`. Its health endpoint is
-`http://localhost:8080/actuator/health`. The notification service has no API; its health endpoint
-is `http://localhost:8081/actuator/health`.
+| Application | Address | Health |
+|---|---|---|
+| API | `http://localhost:8080` | `/actuator/health` |
+| Notification service (no API of its own) | `http://localhost:8081` | `/actuator/health` |
+| Web | `http://localhost:3000` | `/healthz` |
 
 ## Coding Standards
 

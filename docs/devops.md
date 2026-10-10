@@ -18,8 +18,8 @@ environment-specific is baked into an image.
 
 ### Images
 
-- **One multi-stage Dockerfile per deployable application,** kept next to its code, for example
-  `backend/spring-boot/Dockerfile` and `backend/notification-service/Dockerfile`.
+- **One multi-stage Dockerfile per deployable application,** kept next to its code:
+  `backend/spring-boot/`, `backend/notification-service/` and `frontend/nextjs/`.
 - **The build context is the repository root:** the API's build reads `contract/openapi.yaml`, and
   one `.dockerignore` then covers every image. It keeps everything else out of the context,
   including every `.env` file.
@@ -32,15 +32,21 @@ environment-specific is baked into an image.
   - Uses the Spring Boot layered jar, so dependency layers are rebuilt only when dependencies change.
   - Runs as a non-root user.
   - Has a `HEALTHCHECK` against `/actuator/health`.
-- **Base images** are pinned to a major version (`eclipse-temurin:21-jre`, `postgres:18`).
-  Dependabot proposes updates.
+- **The web runtime stage** ships Next.js's standalone output: a server and the files it traced,
+  without the sources or a package manager. **npm and corepack are removed**, because a runtime has
+  no use for them and their bundled dependencies are the image's largest source of reported
+  vulnerabilities.
+- **The build takes no configuration.** If a build ever needed a secret to succeed, the same image
+  could not run in every environment, so that would be the bug.
+- **Base images** are pinned to a major version (`eclipse-temurin:21-jre`, `node:24-alpine`,
+  `postgres:18`). Dependabot proposes updates.
 - **Logging:** containers log JSON; local runs log plain text ([observability.md](observability.md)).
 
 ### Docker Compose
 
 - **`docker-compose.yml`** at the repository root defines the local stack: `postgres`, `kafka`,
-  `api` and `notification`. The web app joins it with its sign-in flow; until then it runs from
-  source against the stack (`npm run dev`).
+  `api`, `notification` and `web`. The web app can also run from source against the stack
+  (`npm run dev`), which is the usual way to work on it.
 - **The contract test stack leaves Kafka and the notification service out** and sets
   `OUTBOX_TARGET=log`, because those tests check the API, not the broker.
 - **Each service has its own database.** `docker/postgres/init/` creates the notification service's
@@ -83,7 +89,7 @@ Workflows live in `.github/workflows/`.
 | `contract.yml` | 1. Lint (Redocly)<br>2. Breaking-change check against the target branch (oasdiff; pull requests only) |
 | `backend-spring-boot.yml` | 1. Format check (Spotless)<br>2. Build, including code generation<br>3. Unit and integration tests (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy)<br>6. Contract tests: Hurl and Schemathesis via `contract/run-tests.sh` |
 | `backend-notification-service.yml` | 1. Format check (Spotless)<br>2. Build<br>3. Consumer tests against PostgreSQL and Kafka (Testcontainers)<br>4. Docker image build<br>5. Image vulnerability scan (Trivy) |
-| `web.yml` | 1. Generate the API types from the contract<br>2. Format check (Prettier)<br>3. Lint (ESLint)<br>4. Type check (`tsc`)<br>5. Unit tests (Vitest)<br>6. Build<br>7. End-to-end tests: a real browser against the API and a mock identity provider (`frontend/nextjs/e2e/run-tests.sh`) |
+| `web.yml` | 1. Generate the API types from the contract<br>2. Format check (Prettier)<br>3. Lint (ESLint)<br>4. Type check (`tsc`)<br>5. Unit tests (Vitest)<br>6. Build<br>7. Docker image build<br>8. Image vulnerability scan (Trivy)<br>9. End-to-end tests: a real browser against the API and a mock identity provider (`frontend/nextjs/e2e/run-tests.sh`) |
 | `codeql.yml` | Static security analysis (CodeQL) of the Java code and the workflow files. Also runs weekly. |
 
 The target pipeline for a pull request is:
@@ -108,7 +114,7 @@ Every check must pass before merging ([git.md](git.md)).
 | Setting | Value |
 |---|---|
 | Changes only through pull requests | yes; 0 required approvals, because there is a single maintainer |
-| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Lint, build and test the web app` and `Web end-to-end tests` (Web)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
+| Required status checks | `Lint` and `Breaking changes` (Contract)<br>`Lint, build and test`, `Docker image and vulnerability scan` and `Contract tests` (Backend)<br>`Lint, build and test the notification service` and `Notification image and vulnerability scan` (Notification service)<br>`Lint, build and test the web app`, `Web image and vulnerability scan` and `Web end-to-end tests` (Web)<br>`Analyze (java-kotlin)` and `Analyze (actions)` (CodeQL) |
 | Branch must be up to date before merging | yes |
 | Conversations must be resolved | yes |
 | Force pushes and deletion | blocked |
@@ -123,7 +129,7 @@ CI and CD are separate. CI proves that a change is correct; CD publishes a relea
 
 | Trigger | Result |
 |---|---|
-| Tag `vX.Y.Z` on `main` (`release.yml`) | `ghcr.io/<owner>/mustafagokselgokmen-api` and `ghcr.io/<owner>/mustafagokselgokmen-notification`, each tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
+| Tag `vX.Y.Z` on `main` (`release.yml`) | One image per deployable — `mustafagokselgokmen-api`, `mustafagokselgokmen-notification` and `mustafagokselgokmen-web` under `ghcr.io/<owner>/` — each tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
 
 Deployment isn't configured yet. Once a hosting target is chosen, a `deploy` job runs after the
 image is published:

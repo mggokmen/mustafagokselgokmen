@@ -99,9 +99,10 @@ Prerequisites:
 Run the local stack:
 
 ```bash
-cp .env.example .env          # then set POSTGRES_PASSWORD and NOTIFICATION_DB_PASSWORD
-docker compose up --build     # PostgreSQL, Kafka, the API on 8080 and the notification service
+cp .env.example .env          # then fill in the required values it lists
+docker compose up --build     # PostgreSQL, Kafka, the API on 8080, the web app on 3000
 curl http://localhost:8080/actuator/health
+curl http://localhost:3000/healthz
 ```
 
 To develop the backend from source, see [Build and Run](AGENTS.md#build-and-run).

@@ -77,10 +77,17 @@ Commit messages follow [Conventional Commits](https://www.conventionalcommits.or
 ## Releasing
 
 1. On a `release/X.Y.Z` branch, set the application versions to `X.Y.Z` (for example
-   `backend/spring-boot/pom.xml`), then merge it into `develop`.
-2. Open a pull request from `develop` into `main`. Merge it with a merge commit once CI is green.
-3. After CI on `main` is green, tag the merge commit `vX.Y.Z` and push the tag. `release.yml`
+   `backend/spring-boot/pom.xml`).
+2. **Expect the image scans to fail, and fix them on this branch.** Advisories are published
+   whether or not the code changes, so an image that passed weeks ago can fail today. A version
+   must not ship advisories that are already fixed upstream, and the tag is far too late to find
+   that out. Take the upstream fix where there is one; where the finding comes from the base image
+   rather than from our dependencies, remove what the runtime doesn't need.
+3. Merge the release branch into `develop`.
+4. Open a pull request from `develop` into `main`. Merge it with a merge commit once CI is green.
+5. After CI on `main` is green, tag the merge commit `vX.Y.Z` and push the tag. `release.yml`
    publishes the images ([devops.md](devops.md#continuous-delivery)).
-4. Create a GitHub Release for the tag. Its notes state what the version contains and what it
+6. **Ask the registry** whether each image is really there, rather than trusting a green workflow.
+7. Create a GitHub Release for the tag. Its notes state what the version contains and what it
    doesn't contain yet.
-5. On `develop`, move the versions to the next `-SNAPSHOT`.
+8. On `develop`, move the versions to the next `-SNAPSHOT`.

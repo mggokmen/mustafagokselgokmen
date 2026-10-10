@@ -28,7 +28,11 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app \
-    && useradd --system --gid app --no-create-home app
+    && useradd --system --gid app --no-create-home app \
+    # pebble is Ubuntu 26.04 base image furniture: a service manager this image never runs, since
+    # the entrypoint below is java itself. Removing it takes three Go standard library advisories
+    # out of the image, the same way the web image drops npm.
+    && rm -rf /usr/bin/pebble /var/lib/pebble
 
 WORKDIR /app
 

@@ -111,6 +111,9 @@ And for the public page, which is what a visitor meets first:
 | The social card | `og:image` is absolute and canonical, and the image this build serves is a PNG |
 | A visitor who is already signed in | The call to action reaches the form, not the page they came from |
 | A visitor without a session | The same call to action goes through sign-in and ends at the form |
+| `/tr` | The same page in Turkish, with `lang`, `hreflang` and the same figures as the English one |
+| The language switch | Crosses to the other language on the page the visitor is on, and back |
+| What is only in English | The Turkish page says that the application behind sign-in is not translated |
 
 That second row exists because production once served this page under a policy that blocked every
 stylesheet and script. The HTML stayed perfect, so the build, the unit tests and a `curl` of the

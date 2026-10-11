@@ -8,7 +8,7 @@ export const alt = "Mustafa Göksel Gökmen · Senior Software Developer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-const FACTS = ["One API contract", "One backend live, three planned", "150 automated tests"];
+const FACTS = ["One API contract", "One backend live, three planned", "160 automated tests"];
 
 export default function OpengraphImage() {
   return new ImageResponse(

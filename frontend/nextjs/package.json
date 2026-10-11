@@ -1,6 +1,6 @@
 {
   "name": "mustafagokselgokmen-web",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "scripts": {
     "gen:api": "openapi-typescript ../../contract/openapi.yaml -o src/lib/api/schema.d.ts",

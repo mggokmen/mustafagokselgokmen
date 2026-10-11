@@ -1,0 +1,69 @@
+# Production stack (ADR-011). Runs on the server, behind the nginx that already serves other sites.
+#
+#   docker compose -f compose.prod.yml --env-file .env pull
+#   docker compose -f compose.prod.yml --env-file .env up -d
+#
+# Kafka and the notification service are deliberately absent: the server has other tenants and not
+# enough memory for them. The API records events in the same transaction as the change that
+# produced them and writes them to the log instead of a broker, which is the mode ADR-008 describes
+# for an environment without one.
+name: mustafagokselgokmen
+
+services:
+  # Its own instance, at the major version the tests run against. The server's PostgreSQL 16 keeps
+  # serving the sites that already use it.
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mustafagokselgokmen}
+      POSTGRES_USER: ${POSTGRES_USER:-mustafagokselgokmen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    image: ghcr.io/mggokmen/mustafagokselgokmen-api:${APP_VERSION:?}
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-mustafagokselgokmen}
+      DB_USER: ${POSTGRES_USER:-mustafagokselgokmen}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      GOOGLE_CLIENT_IDS: ${GOOGLE_CLIENT_IDS:?}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      # No broker here (ADR-011). Events are recorded and logged, not published.
+      OUTBOX_TARGET: log
+      # Two cores shared with seven other sites: the heap is capped rather than left to guess.
+      JAVA_TOOL_OPTIONS: -Xmx256m -XX:MaxMetaspaceSize=128m
+    # Loopback only. nginx is the only way in.
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/mggokmen/mustafagokselgokmen-web:${APP_VERSION:?}
+    environment:
+      # Over the compose network, not through nginx and back.
+      API_BASE_URL: http://api:8080
+      # https, so the session cookies are marked Secure.
+      APP_URL: ${WEB_APP_URL:?}
+      GOOGLE_CLIENT_ID: ${WEB_GOOGLE_CLIENT_ID:?}
+      GOOGLE_CLIENT_SECRET: ${WEB_GOOGLE_CLIENT_SECRET:?}
+    # 3000 belongs to another application on this host.
+    ports:
+      - "127.0.0.1:13000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

@@ -62,6 +62,7 @@ mobile/
   android/           Android app
   ios/               iOS app
 docs/                standards, architecture, decision records
+deploy/              production compose file and the steps that put it there
 docker/              container support files, such as database init scripts
 .github/             CI/CD workflows, Dependabot, pull request template
 docker-compose.yml   local stack: PostgreSQL + Kafka + API + notification service

@@ -110,6 +110,7 @@ And for the public page, which is what a visitor meets first:
 | A 390px viewport | Nothing pushes the page sideways: the horizontal overflow is zero |
 | The social card | `og:image` is absolute and canonical, and the image this build serves is a PNG |
 | A visitor who is already signed in | The call to action reaches the form, not the page they came from |
+| A visitor without a session | The same call to action goes through sign-in and ends at the form |
 
 That second row exists because production once served this page under a policy that blocked every
 stylesheet and script. The HTML stayed perfect, so the build, the unit tests and a `curl` of the

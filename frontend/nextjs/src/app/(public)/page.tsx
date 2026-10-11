@@ -9,7 +9,7 @@ import { CONTACT_EMAIL, GITHUB_URL } from "@/features/landing/site-links";
  */
 
 const EVIDENCE = [
-  { value: "149", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 29 browser" },
+  { value: "150", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 30 browser" },
   { value: "2,889", label: "generated contract cases", detail: "every run explores new input" },
   { value: "12", label: "decision records", detail: "each one says what it costs" },
   { value: "12", label: "checks before a merge", detail: "including three image scans" },

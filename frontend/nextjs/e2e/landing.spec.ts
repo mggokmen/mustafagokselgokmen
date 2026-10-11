@@ -131,3 +131,20 @@ test("a visitor who is already signed in lands on the form, not back here", asyn
   await expect(page).toHaveURL("/contact");
   await expect(page.getByLabel("Subject")).toBeVisible();
 });
+
+test("a visitor without a session is taken through sign-in and left at the form", async ({
+  page,
+  context,
+}) => {
+  await context.clearCookies();
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "Try the application" }).click();
+
+  // The proxy guards /contact, and what it remembers is where the visitor was going.
+  await expect(page).toHaveURL("/login?returnTo=%2Fcontact");
+  await page.getByRole("link", { name: "Continue with Google" }).click();
+
+  await expect(page).toHaveURL("/contact");
+  await expect(page.getByLabel("Subject")).toBeVisible();
+});

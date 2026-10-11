@@ -5,6 +5,10 @@ import { SECTIONS } from "./site-links";
 /**
  * A thin bar that stays put while the page scrolls, so a visitor who is three screens down still
  * knows whose site this is and can still reach the application.
+ *
+ * These pages are prerendered and never call the API, so the bar cannot know whether this visitor
+ * is signed in. It therefore offers the destination rather than the state: /contact is right
+ * either way, because the proxy takes a visitor without a session through sign-in and back.
  */
 export function SiteHeader() {
   return (
@@ -36,10 +40,10 @@ export function SiteHeader() {
         </nav>
 
         <Link
-          href="/login"
+          href="/contact"
           className="ml-auto rounded-md border border-cyan-400/40 px-3 py-1.5 text-sm font-medium text-cyan-300 transition hover:bg-cyan-400/10 md:ml-0"
         >
-          Sign in
+          Send a message
         </Link>
       </div>
     </header>

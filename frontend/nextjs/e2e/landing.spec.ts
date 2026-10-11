@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { signIn } from "./support";
+
 /**
  * The page a visitor sees first, and the headers it arrives with. The styling assertions are not
  * cosmetic: production once served this page under a Content-Security-Policy written for a static
@@ -48,7 +50,7 @@ test("the page says who built it, what it is, and where the code is", async ({ p
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Mustafa Göksel Gökmen");
   await expect(page.getByRole("link", { name: "Try the application" })).toHaveAttribute(
     "href",
-    "/login",
+    "/contact",
   );
   await expect(page.getByRole("link", { name: "Read the source" })).toHaveAttribute(
     "href",
@@ -80,7 +82,10 @@ test("the header and footer carry the site, on every public page", async ({ page
     "href",
     "/",
   );
-  await expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+  await expect(header.getByRole("link", { name: "Send a message" })).toHaveAttribute(
+    "href",
+    "/contact",
+  );
 
   const footer = page.getByRole("contentinfo");
   await expect(footer.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
@@ -114,4 +119,32 @@ test("a link to this site unfolds into a card that says who it is", async ({ pag
   const image = await request.get(new URL(declared ?? "").pathname);
   expect(image.status()).toBe(200);
   expect(image.headers()["content-type"]).toContain("image/png");
+});
+
+test("a visitor who is already signed in lands on the form, not back here", async ({ page }) => {
+  await signIn(page, "/");
+
+  await page.getByRole("link", { name: "Try the application" }).click();
+
+  // The first version of this page pointed at /login, which redirects a visitor who already has a
+  // session to "/" — so signing in appeared to do nothing, and the form could not be found at all.
+  await expect(page).toHaveURL("/contact");
+  await expect(page.getByLabel("Subject")).toBeVisible();
+});
+
+test("a visitor without a session is taken through sign-in and left at the form", async ({
+  page,
+  context,
+}) => {
+  await context.clearCookies();
+  await page.goto("/");
+
+  await page.getByRole("link", { name: "Try the application" }).click();
+
+  // The proxy guards /contact, and what it remembers is where the visitor was going.
+  await expect(page).toHaveURL("/login?returnTo=%2Fcontact");
+  await page.getByRole("link", { name: "Continue with Google" }).click();
+
+  await expect(page).toHaveURL("/contact");
+  await expect(page.getByLabel("Subject")).toBeVisible();
 });

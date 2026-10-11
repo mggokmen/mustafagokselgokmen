@@ -9,7 +9,7 @@ import { CONTACT_EMAIL, GITHUB_URL } from "@/features/landing/site-links";
  */
 
 const EVIDENCE = [
-  { value: "148", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 28 browser" },
+  { value: "150", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 30 browser" },
   { value: "2,889", label: "generated contract cases", detail: "every run explores new input" },
   { value: "12", label: "decision records", detail: "each one says what it costs" },
   { value: "12", label: "checks before a merge", detail: "including three image scans" },
@@ -123,9 +123,12 @@ function Hero() {
           consumed by this web app, with an event pipeline behind it. Everything below is running or
           in the repository, and the parts that are not deployed say so.
         </p>
+        {/* Both routes end at the form: the proxy sends a signed-out visitor through sign-in and
+            back, and a signed-in one straight there. Pointing at /login instead would bounce
+            anyone who already has a session back to this page. */}
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
-            href="/login"
+            href="/contact"
             className="rounded-md bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
           >
             Try the application
@@ -356,10 +359,10 @@ function Contact() {
       </p>
       <div className="flex flex-wrap gap-3">
         <Link
-          href="/login"
+          href="/contact"
           className="rounded-md bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
         >
-          Sign in and send one
+          Send a message
         </Link>
         <a
           href={`mailto:${CONTACT_EMAIL}`}

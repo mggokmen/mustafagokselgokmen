@@ -296,7 +296,7 @@ function Contact() {
           <Link href="/privacy" className="transition hover:text-slate-300">
             Privacy
           </Link>
-          <span className="ml-auto text-xs">Running v0.3.0</span>
+          <span className="ml-auto text-xs">Running v0.4.0</span>
         </footer>
       </div>
     </Section>

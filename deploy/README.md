@@ -67,3 +67,10 @@ The vhost lives on the server, not here: it belongs to that machine's configurat
 other sites. It terminates TLS with a Let's Encrypt certificate, proxies `/` to the web app and
 `/api/` to the API, and serves the ACME challenge path from disk. Cloudflare sits in front in
 **Full (strict)** mode.
+
+**It must not add security headers.** The application sends its own
+([ADR-012](../docs/decisions/012-security-headers.md)), and a browser enforces every policy it
+receives, so a second `Content-Security-Policy` from the proxy is intersected with the first and
+the strictest one silently wins. That is not theoretical: this vhost kept the policy written for
+the static placeholder it used to serve, and production shipped correct HTML with every stylesheet
+and script blocked.

@@ -32,7 +32,9 @@ Browser --(HttpOnly cookies)--> Next.js server --(Authorization: Bearer)--> Back
 ```
 src/
 ├── app/
-│   ├── (public)/                    public pages: static, no API calls
+│   ├── (public)/layout.tsx          the public shell: header, footer
+│   ├── (public)/page.tsx            the landing page
+│   ├── (public)/privacy/page.tsx    what is stored, and why
 │   ├── login/page.tsx               "Sign in with Google"
 │   ├── auth/google/route.ts         starts the OAuth flow
 │   ├── auth/google/callback/route.ts
@@ -41,8 +43,9 @@ src/
 │   ├── (app)/admin/messages/page.tsx  every message, filtered, with the status workflow
 │   ├── error.tsx
 │   └── not-found.tsx
+├── app/icon.svg, app/opengraph-image.tsx   the tab icon and the social card
 ├── features/contact/                components, actions.ts (Server Actions), schemas.ts (zod)
-├── components/ui/                   shared presentational components
+├── features/landing/                the public pages: shell, diagram, the links they share
 ├── lib/api/                         api-client.ts, api-error.ts, types.ts, schema.d.ts (generated)
 ├── lib/auth/                        OIDC client setup, session cookie helpers
 └── proxy.ts                         route protection and token refresh
@@ -133,10 +136,34 @@ example `type ContactMessage = components["schemas"]["ContactMessageResponse"]`.
 | 429 | show when the user can try again |
 | Anything else | throw; `error.tsx` renders a generic message, never raw backend text |
 
+## Look and feel
+
+The public pages are the first thing anyone sees, so they are held to the same standard as the
+code behind them.
+
+- **One palette.** `@custom-variant dark (&)` in `globals.css` makes every `dark:` utility apply
+  unconditionally, so the signed-in area matches the public pages without a second set of classes
+  and a visitor in light mode sees the same site as everyone else.
+- **Two typefaces, self-hosted.** Inter for prose and JetBrains Mono for anything a machine
+  produced — numbers from a test runner, status codes, stack names. `next/font` serves them from
+  this origin, which is what keeps `font-src 'self'` in the policy.
+- **The shell is shared.** `(public)/layout.tsx` carries the header and footer, so the landing
+  page and the privacy policy are the same site. The footer's version is read from
+  `package.json`: a build states its own version instead of a string someone has to remember.
+- **Metadata is built, not written twice.** `app/icon.svg` is the tab icon and
+  `app/opengraph-image.tsx` renders the social card with `next/og`, from the same facts the page
+  states. `metadataBase` is a constant in `features/landing/site-links.ts` rather than an
+  environment variable, because a statically rendered page bakes its metadata at build time and
+  **the build is given no configuration** ([devops.md](../devops.md#images)).
+- **Nothing on the page is an estimate.** Every number comes from a runner or the repository, and
+  the architecture diagram marks what is not deployed.
+
 ## Security headers
 
-`next.config` and `proxy.ts` set the headers listed in [security.md](../security.md#xss), including
-a nonce-based Content-Security-Policy.
+`next.config.ts` sets them, for every route, and they are listed in
+[security.md](../security.md#xss). They live with the code rather than in the reverse proxy in
+front of it, and `e2e/landing.spec.ts` asserts both the headers and the fact that a real browser
+loaded the stylesheet ([ADR-012](../decisions/012-security-headers.md)).
 
 ## Code generation
 

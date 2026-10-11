@@ -145,11 +145,22 @@ tokens, which the client uses for every later request.
 - **Contact messages are untrusted input**, and admins view them. They are always rendered as plain
   text, never as HTML or Markdown.
 - React escapes output. `dangerouslySetInnerHTML` is prohibited.
-- The web app sends these headers:
-  - a nonce-based `Content-Security-Policy`
+- **The web app sends its own headers**, from `next.config.ts`, so they ship and are tested with
+  the code they protect ([ADR-012](decisions/012-security-headers.md)). A reverse proxy in front of
+  it adds none of its own: a browser enforces every policy it receives, so two of them silently
+  intersect.
+  - `Content-Security-Policy: default-src 'self'`, with `connect-src 'self'`, `form-action 'self'`,
+    `frame-ancestors 'none'`, `base-uri 'none'` and `object-src 'none'`
+  - `script-src` and `style-src` allow `'unsafe-inline'`, which is what keeps the public pages
+    statically rendered. It is defensible only because no user-supplied markup is ever rendered;
+    ADR-012 says what changes the day that stops being true.
   - `X-Content-Type-Options: nosniff`
   - `Referrer-Policy: strict-origin-when-cross-origin`
-  - `frame-ancestors 'none'`
+  - `Cross-Origin-Opener-Policy: same-origin`
+  - `Permissions-Policy`: camera, microphone and geolocation off
+- **A browser test proves it**, not a reading of the HTML. Production once served this app a policy
+  that blocked every stylesheet and script while the markup stayed perfect, and nothing that reads
+  markup could tell.
 - The API returns only JSON, with the correct `Content-Type`.
 
 ## Secrets and configuration

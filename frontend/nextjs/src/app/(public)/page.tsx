@@ -8,12 +8,30 @@ import { ArchitectureDiagram } from "@/features/landing/ArchitectureDiagram";
  */
 
 const GITHUB = "https://github.com/mggokmen/mustafagokselgokmen";
+const LINKEDIN = "https://www.linkedin.com/in/mustafa-goksel-gokmen/";
 
 const EVIDENCE = [
   { value: "141", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 21 browser" },
   { value: "2,889", label: "generated contract cases", detail: "every run explores new input" },
   { value: "11", label: "decision records", detail: "each one says what it costs" },
   { value: "12", label: "checks before a merge", detail: "including three image scans" },
+];
+
+const PROJECTS = [
+  {
+    name: "Notorite",
+    href: "https://notorite.com/",
+    summary:
+      "Reads marketplace reviews and complaint history and turns them into one trust score per product, seller and brand, so a shopper gets an answer instead of a star average.",
+    platforms: ["Web", "Browser extension", "Android"],
+  },
+  {
+    name: "Map's Star",
+    href: "https://www.mapsstar.com/",
+    summary:
+      "A bid holds an administrative region on a world map until someone bids higher. No combat and no resources: the whole mechanic is the standing bid, settled with tokens bought in the apps.",
+    platforms: ["Web", "iOS", "Android"],
+  },
 ];
 
 const DECISIONS = [
@@ -69,6 +87,7 @@ export default function HomePage() {
         <Architecture />
         <Evidence />
         <Decisions />
+        <Projects />
         <Stack />
         <Contact />
       </main>
@@ -187,6 +206,47 @@ function Decisions() {
   );
 }
 
+function Projects() {
+  return (
+    <Section
+      eyebrow="Other work"
+      title="Products I build and run"
+      lead="Outside this repository, and live. Each link goes to the running product."
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        {PROJECTS.map((project) => (
+          <a
+            key={project.name}
+            href={project.href}
+            className="group flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-6 transition hover:border-cyan-500/50 hover:bg-slate-900/70"
+          >
+            <h3 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+              {project.name}
+              <span
+                aria-hidden="true"
+                className="text-cyan-400 transition group-hover:translate-x-0.5"
+              >
+                &rarr;
+              </span>
+            </h3>
+            <p className="text-sm leading-relaxed text-slate-400">{project.summary}</p>
+            <ul className="mt-auto flex flex-wrap gap-2 pt-1">
+              {project.platforms.map((platform) => (
+                <li
+                  key={platform}
+                  className="rounded-full border border-slate-800 px-2.5 py-0.5 text-xs text-slate-500"
+                >
+                  {platform}
+                </li>
+              ))}
+            </ul>
+          </a>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 function Stack() {
   return (
     <Section eyebrow="Stack" title="What it is built with">
@@ -229,6 +289,9 @@ function Contact() {
         <footer className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-800 pt-6 text-sm text-slate-500">
           <a href={GITHUB} className="transition hover:text-slate-300">
             GitHub
+          </a>
+          <a href={LINKEDIN} className="transition hover:text-slate-300">
+            LinkedIn
           </a>
           <Link href="/privacy" className="transition hover:text-slate-300">
             Privacy

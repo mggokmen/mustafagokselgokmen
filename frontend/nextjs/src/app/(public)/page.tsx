@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 /**
  * Public pages are static and never call the API (docs/architecture.md#web).
  */
@@ -29,6 +31,14 @@ export default function HomePage() {
           </dd>
         </div>
       </dl>
+      <footer className="flex gap-4 text-sm text-slate-500 dark:text-slate-500">
+        <Link href="/login" className="font-medium hover:underline">
+          Sign in
+        </Link>
+        <Link href="/privacy" className="hover:underline">
+          Privacy
+        </Link>
+      </footer>
     </main>
   );
 }

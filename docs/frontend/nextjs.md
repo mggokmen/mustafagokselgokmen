@@ -135,8 +135,10 @@ example `type ContactMessage = components["schemas"]["ContactMessageResponse"]`.
 
 ## Security headers
 
-`next.config` and `proxy.ts` set the headers listed in [security.md](../security.md#xss), including
-a nonce-based Content-Security-Policy.
+`next.config.ts` sets them, for every route, and they are listed in
+[security.md](../security.md#xss). They live with the code rather than in the reverse proxy in
+front of it, and `e2e/landing.spec.ts` asserts both the headers and the fact that a real browser
+loaded the stylesheet ([ADR-012](../decisions/012-security-headers.md)).
 
 ## Code generation
 

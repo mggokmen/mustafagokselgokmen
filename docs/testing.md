@@ -98,6 +98,20 @@ And for the contact flow:
 | A message containing markup | Shown as text; no element is created from it |
 | The sixth message in an hour | The API's 429 becomes a sentence saying when to try again, from `Retry-After` |
 
+And for the public page, which is what a visitor meets first:
+
+| Case | What it proves |
+|---|---|
+| The response headers | The policy the browser is given, including `form-action` and `frame-ancestors` |
+| The stylesheet | A real browser **fetched** it, and the body is not transparent |
+| Console errors | Nothing on the page is refused by the policy |
+| The sections and links | Who built it, what it is, where the code is, and which parts are not deployed |
+
+That second row exists because production once served this page under a policy that blocked every
+stylesheet and script. The HTML stayed perfect, so the build, the unit tests and a `curl` of the
+deployed page all passed. Only a browser can fail that test
+([ADR-012](decisions/012-security-headers.md)).
+
 And for the admin views:
 
 | Case | What it proves |

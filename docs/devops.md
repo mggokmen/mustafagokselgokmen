@@ -9,7 +9,7 @@ delivered.
 |---|---|---|
 | Local development | Docker Compose runs PostgreSQL. The API runs either in Compose or from source. | `.env` files (gitignored), copied from `.env.example` |
 | CI | GitHub Actions on `ubuntu-latest`. Testcontainers provides PostgreSQL. | No secrets are needed to build and test |
-| Production | Images from GitHub Container Registry, configured with environment variables | The hosting platform's secret store (to be decided) |
+| Production | Images from GitHub Container Registry, on a VPS behind the nginx that serves other sites ([ADR-011](decisions/011-deployment.md)) | `/srv/mustafagokselgokmen/.env` on the server, readable by root only |
 
 The same image runs in every environment; only the configuration changes. Nothing
 environment-specific is baked into an image.
@@ -131,10 +131,25 @@ CI and CD are separate. CI proves that a change is correct; CD publishes a relea
 |---|---|
 | Tag `vX.Y.Z` on `main` (`release.yml`) | One image per deployable — `mustafagokselgokmen-api`, `mustafagokselgokmen-notification` and `mustafagokselgokmen-web` under `ghcr.io/<owner>/` — each tagged `X.Y.Z`, `X.Y`, `latest` and the commit SHA |
 
-Deployment isn't configured yet. Once a hosting target is chosen, a `deploy` job runs after the
-image is published:
-- to staging, from `develop`
-- to production, from release tags, behind a GitHub Environment that requires manual approval
+## Deployment
+
+**Two of the three images run in production.** The web app and the API are deployed; Kafka and the
+notification service are not, because the server has other tenants and not enough memory for them.
+The API runs with `OUTBOX_TARGET=log`, which still records every event in the transaction that
+produced it ([ADR-011](decisions/011-deployment.md)).
+
+- The stack is [`deploy/compose.prod.yml`](../deploy/compose.prod.yml), kept on the server at
+  `/srv/mustafagokselgokmen/`, with its own `postgres:18` so production runs the major version the
+  tests ran against.
+- Applications bind to **loopback only**; the machine's existing nginx is the only way in, and
+  Cloudflare sits in front of it in Full (strict) mode.
+- Deploying is `pull` then `up -d` with `APP_VERSION` set to a release tag, so what runs is an
+  image CI built and scanned. Rolling back is the same command with the previous tag.
+- There is **no staging environment**, and **no automated deployment**: a workflow with a key to
+  this machine would also have a key to seven unrelated sites. That trade gets its own ADR once
+  deploying by hand has proven boring.
+
+Steps and commands: [`deploy/README.md`](../deploy/README.md).
 
 ## Supply chain
 

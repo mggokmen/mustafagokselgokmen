@@ -71,3 +71,47 @@ test("the diagram says which parts are not deployed", async ({ page }) => {
   await expect(page.getByRole("img", { name: /One OpenAPI contract/ })).toBeVisible();
   await expect(page.getByText("built and tested, not deployed")).toBeVisible();
 });
+
+test("the header and footer carry the site, on every public page", async ({ page }) => {
+  await page.goto("/privacy");
+
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "Mustafa Göksel Gökmen" })).toHaveAttribute(
+    "href",
+    "/",
+  );
+  await expect(header.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+
+  const footer = page.getByRole("contentinfo");
+  await expect(footer.getByRole("link", { name: "LinkedIn" })).toHaveAttribute(
+    "href",
+    /linkedin\.com/,
+  );
+  // The version is read from package.json, so a build states its own version.
+  await expect(footer.getByText(/^v\d+\.\d+\.\d+$/)).toBeVisible();
+});
+
+test("a phone gets the whole page, not a page wider than the phone", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, "nothing may push the page sideways").toBe(0);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("a link to this site unfolds into a card that says who it is", async ({ page, request }) => {
+  await page.goto("/");
+
+  await expect(page).toHaveTitle("Mustafa Göksel Gökmen · Senior Software Developer");
+  // The card's address is absolute and canonical, because a scraper reads it from somewhere else
+  // entirely. The image itself belongs to this build, so it is fetched from this server.
+  const declared = await page.locator('meta[property="og:image"]').getAttribute("content");
+  expect(declared).toMatch(/^https:\/\/mustafagokselgokmen\.com\.tr\/opengraph-image/);
+
+  const image = await request.get(new URL(declared ?? "").pathname);
+  expect(image.status()).toBe(200);
+  expect(image.headers()["content-type"]).toContain("image/png");
+});

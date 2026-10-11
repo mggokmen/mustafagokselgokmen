@@ -1,1 +1,34 @@
 @import "tailwindcss";
+
+/* The site has one palette: dark. Making every `dark:` utility apply unconditionally keeps the
+   signed-in area consistent with the public pages without a second set of classes to maintain, and
+   a visitor whose system is in light mode sees the same site as everyone else. */
+@custom-variant dark (&);
+
+/* The two typefaces are loaded by next/font in the root layout, which self-hosts them: no request
+   leaves the browser for a font, and the policy in next.config.ts keeps font-src at 'self'. */
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+/* A visible focus ring is the only way a keyboard reaches anything here. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-cyan-400);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-cyan-400) 30%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

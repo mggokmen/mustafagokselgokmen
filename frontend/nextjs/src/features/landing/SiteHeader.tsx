@@ -1,0 +1,47 @@
+import Link from "next/link";
+
+import { SECTIONS } from "./site-links";
+
+/**
+ * A thin bar that stays put while the page scrolls, so a visitor who is three screens down still
+ * knows whose site this is and can still reach the application.
+ */
+export function SiteHeader() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/5 bg-[#05070f]/80 backdrop-blur">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 text-sm font-semibold tracking-tight whitespace-nowrap"
+        >
+          <span
+            aria-hidden="true"
+            className="grid size-7 place-items-center rounded-md border border-cyan-400/30 bg-cyan-400/10 font-mono text-[11px] text-cyan-300"
+          >
+            MG
+          </span>
+          <span className="hidden sm:inline">Mustafa Göksel Gökmen</span>
+        </Link>
+
+        <nav className="ml-auto hidden items-center gap-6 md:flex" aria-label="Sections">
+          {SECTIONS.map((section) => (
+            <a
+              key={section.id}
+              href={`#${section.id}`}
+              className="text-sm text-slate-400 transition hover:text-slate-100"
+            >
+              {section.label}
+            </a>
+          ))}
+        </nav>
+
+        <Link
+          href="/login"
+          className="ml-auto rounded-md border border-cyan-400/40 px-3 py-1.5 text-sm font-medium text-cyan-300 transition hover:bg-cyan-400/10 md:ml-0"
+        >
+          Sign in
+        </Link>
+      </div>
+    </header>
+  );
+}

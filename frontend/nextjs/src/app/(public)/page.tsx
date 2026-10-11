@@ -1,37 +1,18 @@
 import Link from "next/link";
 
 import { ArchitectureDiagram } from "@/features/landing/ArchitectureDiagram";
+import { CONTACT_EMAIL, GITHUB_URL } from "@/features/landing/site-links";
 
 /**
  * Public pages are static and never call the API (docs/architecture.md#web). Every number on this
  * page comes from a test runner or the repository, not from an estimate.
  */
 
-const GITHUB = "https://github.com/mggokmen/mustafagokselgokmen";
-const LINKEDIN = "https://www.linkedin.com/in/mustafa-goksel-gokmen/";
-
 const EVIDENCE = [
-  { value: "141", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 21 browser" },
+  { value: "148", label: "automated tests", detail: "63 API · 7 consumer · 50 web · 28 browser" },
   { value: "2,889", label: "generated contract cases", detail: "every run explores new input" },
-  { value: "11", label: "decision records", detail: "each one says what it costs" },
+  { value: "12", label: "decision records", detail: "each one says what it costs" },
   { value: "12", label: "checks before a merge", detail: "including three image scans" },
-];
-
-const PROJECTS = [
-  {
-    name: "Notorite",
-    href: "https://notorite.com/",
-    summary:
-      "Reads marketplace reviews and complaint history and turns them into one trust score per product, seller and brand, so a shopper gets an answer instead of a star average.",
-    platforms: ["Web", "Browser extension", "Android"],
-  },
-  {
-    name: "Map's Star",
-    href: "https://www.mapsstar.com/",
-    summary:
-      "A bid holds an administrative region on a world map until someone bids higher. No combat and no resources: the whole mechanic is the standing bid, settled with tokens bought in the apps.",
-    platforms: ["Web", "iOS", "Android"],
-  },
 ];
 
 const DECISIONS = [
@@ -61,6 +42,23 @@ const DECISIONS = [
   },
 ];
 
+const PROJECTS = [
+  {
+    name: "Notorite",
+    href: "https://notorite.com/",
+    summary:
+      "Reads marketplace reviews and complaint history and turns them into one trust score per product, seller and brand, so a shopper gets an answer instead of a star average.",
+    platforms: ["Web", "Browser extension", "Android"],
+  },
+  {
+    name: "Map's Star",
+    href: "https://www.mapsstar.com/",
+    summary:
+      "A bid holds an administrative region on a world map until someone bids higher. No combat and no resources: the whole mechanic is the standing bid, settled with tokens bought in the apps.",
+    platforms: ["Web", "iOS", "Android"],
+  },
+];
+
 const STACK = [
   "Java 21",
   "Spring Boot 4",
@@ -81,35 +79,46 @@ const STACK = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-dvh bg-slate-950 text-slate-100">
-      <main className="mx-auto max-w-5xl px-6 py-16 sm:py-24">
+    <main className="relative isolate">
+      <Backdrop />
+      <div className="mx-auto max-w-5xl px-6 pt-16 pb-24 sm:pt-24">
         <Hero />
         <Architecture />
         <Evidence />
         <Decisions />
-        <Projects />
+        <Work />
         <Stack />
         <Contact />
-      </main>
-    </div>
+      </div>
+    </main>
+  );
+}
+
+/** Light behind the first screen, so the page has a top rather than starting in the middle. */
+function Backdrop() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[32rem] bg-[radial-gradient(60%_60%_at_20%_0%,rgba(34,211,238,0.12),transparent_70%)]"
+    />
   );
 }
 
 function Hero() {
   return (
-    <section className="flex flex-col gap-6">
-      <div className="flex max-w-3xl flex-col gap-6">
-        <p className="text-sm font-medium tracking-widest text-cyan-400 uppercase">
+    <section className="grid items-start gap-12 lg:grid-cols-12 lg:gap-10">
+      <div className="flex min-w-0 flex-col gap-6 lg:col-span-7">
+        <p className="font-mono text-xs tracking-[0.2em] text-cyan-400 uppercase">
           Senior Software Developer · 20+ years
         </p>
         <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
           Mustafa Göksel Gökmen
         </h1>
-        <p className="max-w-xl text-lg leading-relaxed text-slate-300">
+        <p className="text-lg leading-relaxed text-pretty text-slate-300">
           I build systems where the hard parts are handled rather than hoped for: identity, event
           delivery, concurrency and the boundary between services.
         </p>
-        <p className="max-w-xl leading-relaxed text-slate-400">
+        <p className="leading-relaxed text-pretty text-slate-400">
           This site is the system it describes. One API contract, implemented in Spring Boot and
           consumed by this web app, with an event pipeline behind it. Everything below is running or
           in the repository, and the parts that are not deployed say so.
@@ -122,25 +131,88 @@ function Hero() {
             Try the application
           </Link>
           <a
-            href={GITHUB}
-            className="rounded-md border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
+            href={GITHUB_URL}
+            className="rounded-md border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/5"
           >
             Read the source
           </a>
         </div>
       </div>
+      <div className="min-w-0 lg:col-span-5">
+        <LiveResponse />
+      </div>
     </section>
+  );
+}
+
+/**
+ * The API answering for itself. This is the unauthenticated response, so it can be shown without a
+ * token and checked by anyone who reads this page.
+ */
+function LiveResponse() {
+  return (
+    <figure className="overflow-hidden rounded-xl border border-white/10 bg-[#070b16] shadow-2xl shadow-black/50">
+      <div className="flex items-center gap-2 border-b border-white/5 px-4 py-3">
+        <span className="size-2.5 rounded-full bg-white/10" />
+        <span className="size-2.5 rounded-full bg-white/10" />
+        <span className="size-2.5 rounded-full bg-white/10" />
+        <span className="ml-2 font-mono text-[11px] text-slate-500">the live API</span>
+      </div>
+      <pre className="px-4 py-4 font-mono text-[11.5px] leading-relaxed break-words whitespace-pre-wrap">
+        <code>
+          <span className="text-slate-600">$ </span>
+          <span className="text-slate-300">curl -s /api/v1/contact-messages</span>
+          {"\n\n"}
+          <span className="text-slate-500">{"{"}</span>
+          {"\n  "}
+          <Field name="type" value="about:blank" />
+          {"\n  "}
+          <Field name="title" value="Authentication required" />
+          {"\n  "}
+          <span className="text-cyan-300">&quot;status&quot;</span>
+          <span className="text-slate-500">: </span>
+          <span className="text-amber-300">401</span>
+          <span className="text-slate-500">,</span>
+          {"\n  "}
+          <Field name="code" value="UNAUTHENTICATED" />
+          {"\n  "}
+          <Field name="detail" value="Missing, invalid or expired credentials." />
+          {"\n  "}
+          <Field name="instance" value="/api/v1/contact-messages" last />
+          {"\n"}
+          <span className="text-slate-500">{"}"}</span>
+        </code>
+      </pre>
+      <figcaption className="border-t border-white/5 px-4 py-3 text-xs leading-relaxed text-slate-500">
+        Every error is a problem detail (RFC 9457) carrying a{" "}
+        <span className="font-mono">code</span> a client can branch on, described in the contract
+        before it was implemented.
+      </figcaption>
+    </figure>
+  );
+}
+
+function Field({ name, value, last }: { name: string; value: string; last?: boolean }) {
+  return (
+    <>
+      <span className="text-cyan-300">&quot;{name}&quot;</span>
+      <span className="text-slate-500">: </span>
+      <span className="text-emerald-300">&quot;{value}&quot;</span>
+      {last !== true && <span className="text-slate-500">,</span>}
+    </>
   );
 }
 
 function Architecture() {
   return (
     <Section
+      id="architecture"
+      index="01"
       eyebrow="Architecture"
       title="A contract first, then everything else"
       lead="The specification is written before the code. Server interfaces, client types and the test suite all come from it, so a disagreement about the API surfaces at build time instead of in production."
     >
-      <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5 sm:p-8">
+      <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5 sm:p-8">
         <ArchitectureDiagram className="mx-auto w-full max-w-3xl" />
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
@@ -164,15 +236,22 @@ function Architecture() {
 function Evidence() {
   return (
     <Section
+      id="evidence"
+      index="02"
       eyebrow="Evidence"
       title="Numbers that come from a test runner"
       lead="Not estimates. Each of these is printed by a tool in continuous integration, on every pull request."
     >
-      <dl className="grid gap-px overflow-hidden rounded-xl border border-slate-800 bg-slate-800 sm:grid-cols-2 lg:grid-cols-4">
+      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {EVIDENCE.map((item) => (
-          <div key={item.label} className="bg-slate-950 p-5">
-            <dt className="text-3xl font-semibold tracking-tight text-cyan-400">{item.value}</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-200">{item.label}</dd>
+          <div
+            key={item.label}
+            className="rounded-xl border border-white/10 bg-white/[0.02] p-5 transition hover:border-cyan-400/30"
+          >
+            <dt className="font-mono text-3xl font-semibold tracking-tight text-cyan-400">
+              {item.value}
+            </dt>
+            <dd className="mt-2 text-sm font-medium text-slate-200">{item.label}</dd>
             <dd className="mt-1 text-xs leading-relaxed text-slate-500">{item.detail}</dd>
           </div>
         ))}
@@ -184,6 +263,8 @@ function Evidence() {
 function Decisions() {
   return (
     <Section
+      id="decisions"
+      index="03"
       eyebrow="Decisions"
       title="Four problems, and what was done about them"
       lead="Each of these is recorded as a decision record in the repository, including what it costs and what was given up."
@@ -192,11 +273,11 @@ function Decisions() {
         {DECISIONS.map((decision) => (
           <article
             key={decision.title}
-            className="flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-6 transition hover:border-slate-700"
+            className="flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-6 transition hover:border-white/20"
           >
             <h3 className="text-lg font-semibold tracking-tight">{decision.title}</h3>
             <p className="text-sm leading-relaxed text-slate-400">{decision.body}</p>
-            <p className="mt-auto border-l-2 border-cyan-500/40 pl-3 text-xs leading-relaxed text-slate-500">
+            <p className="mt-auto border-l-2 border-cyan-400/40 pl-3 text-xs leading-relaxed text-slate-500">
               {decision.proof}
             </p>
           </article>
@@ -206,9 +287,11 @@ function Decisions() {
   );
 }
 
-function Projects() {
+function Work() {
   return (
     <Section
+      id="work"
+      index="04"
       eyebrow="Other work"
       title="Products I build and run"
       lead="Outside this repository, and live. Each link goes to the running product."
@@ -218,7 +301,7 @@ function Projects() {
           <a
             key={project.name}
             href={project.href}
-            className="group flex flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/40 p-6 transition hover:border-cyan-500/50 hover:bg-slate-900/70"
+            className="group flex flex-col gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-6 transition hover:border-cyan-400/40 hover:bg-white/[0.04]"
           >
             <h3 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
               {project.name}
@@ -234,7 +317,7 @@ function Projects() {
               {project.platforms.map((platform) => (
                 <li
                   key={platform}
-                  className="rounded-full border border-slate-800 px-2.5 py-0.5 text-xs text-slate-500"
+                  className="rounded-full border border-white/10 px-2.5 py-0.5 font-mono text-[11px] text-slate-500"
                 >
                   {platform}
                 </li>
@@ -249,12 +332,12 @@ function Projects() {
 
 function Stack() {
   return (
-    <Section eyebrow="Stack" title="What it is built with">
+    <Section index="05" eyebrow="Stack" title="What it is built with">
       <ul className="flex flex-wrap gap-2">
         {STACK.map((item) => (
           <li
             key={item}
-            className="rounded-full border border-slate-800 bg-slate-900/60 px-3 py-1 text-sm text-slate-300"
+            className="rounded-full border border-white/10 bg-white/[0.02] px-3 py-1 font-mono text-xs text-slate-300"
           >
             {item}
           </li>
@@ -266,60 +349,54 @@ function Stack() {
 
 function Contact() {
   return (
-    <Section eyebrow="Contact" title="Get in touch">
-      <div className="flex flex-col gap-6">
-        <p className="max-w-2xl leading-relaxed text-slate-400">
-          The fastest way to see how this works is to use it: sign in and send a message, then watch
-          it move through the workflow.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/login"
-            className="rounded-md bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
-          >
-            Sign in and send one
-          </Link>
-          <a
-            href="mailto:iletisim@mustafagokselgokmen.com.tr"
-            className="rounded-md border border-slate-700 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:border-slate-500 hover:bg-slate-900"
-          >
-            iletisim@mustafagokselgokmen.com.tr
-          </a>
-        </div>
-        <footer className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-slate-800 pt-6 text-sm text-slate-500">
-          <a href={GITHUB} className="transition hover:text-slate-300">
-            GitHub
-          </a>
-          <a href={LINKEDIN} className="transition hover:text-slate-300">
-            LinkedIn
-          </a>
-          <Link href="/privacy" className="transition hover:text-slate-300">
-            Privacy
-          </Link>
-          <span className="ml-auto text-xs">Running v0.4.0</span>
-        </footer>
+    <Section index="06" eyebrow="Contact" title="Get in touch">
+      <p className="max-w-2xl leading-relaxed text-slate-400">
+        The fastest way to see how this works is to use it: sign in and send a message, then watch
+        it move through the workflow.
+      </p>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/login"
+          className="rounded-md bg-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+        >
+          Sign in and send one
+        </Link>
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="rounded-md border border-white/10 px-5 py-2.5 text-sm font-medium text-slate-200 transition hover:border-white/25 hover:bg-white/5"
+        >
+          {CONTACT_EMAIL}
+        </a>
       </div>
     </Section>
   );
 }
 
 function Section({
+  id,
+  index,
   eyebrow,
   title,
   lead,
   children,
 }: {
+  id?: string;
+  index: string;
   eyebrow: string;
   title: string;
   lead?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-16 flex flex-col gap-6 sm:mt-24">
+    <section id={id} className="mt-24 flex scroll-mt-20 flex-col gap-6 sm:mt-32">
       <div className="flex flex-col gap-3">
-        <p className="text-xs font-medium tracking-widest text-cyan-400 uppercase">{eyebrow}</p>
+        <p className="font-mono text-xs tracking-[0.2em] text-cyan-400/80 uppercase">
+          {index} · {eyebrow}
+        </p>
         <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">{title}</h2>
-        {lead !== undefined && <p className="max-w-2xl leading-relaxed text-slate-400">{lead}</p>}
+        {lead !== undefined && (
+          <p className="max-w-2xl leading-relaxed text-pretty text-slate-400">{lead}</p>
+        )}
       </div>
       {children}
     </section>
@@ -328,7 +405,7 @@ function Section({
 
 function Card({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-5">
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
       <h3 className="font-medium text-slate-100">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-400">{body}</p>
     </div>

@@ -106,6 +106,9 @@ And for the public page, which is what a visitor meets first:
 | The stylesheet | A real browser **fetched** it, and the body is not transparent |
 | Console errors | Nothing on the page is refused by the policy |
 | The sections and links | Who built it, what it is, where the code is, and which parts are not deployed |
+| The shell | The header and footer are on every public page, and the footer states the build's own version |
+| A 390px viewport | Nothing pushes the page sideways: the horizontal overflow is zero |
+| The social card | `og:image` is absolute and canonical, and the image this build serves is a PNG |
 
 That second row exists because production once served this page under a policy that blocked every
 stylesheet and script. The HTML stayed perfect, so the build, the unit tests and a `curl` of the

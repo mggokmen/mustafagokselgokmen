@@ -272,3 +272,4 @@ contract test suite unchanged.
 - [ADR-009: Kafka as the event broker](decisions/009-kafka-for-events.md)
 - [ADR-010: Consumer resilience and idempotency](decisions/010-event-consumer-resilience.md)
 - [ADR-011: Where and how 0.2.0 is deployed](decisions/011-deployment.md)
+- [ADR-012: The application sends its own security headers](decisions/012-security-headers.md)

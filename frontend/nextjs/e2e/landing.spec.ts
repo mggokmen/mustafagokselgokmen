@@ -197,3 +197,32 @@ test("the Turkish page says what is only in English", async ({ page }) => {
     page.getByText("Uygulamanın giriş sonrası ekranları şimdilik yalnızca İngilizce."),
   ).toBeVisible();
 });
+
+test("a crawler is told what to read and what to leave alone", async ({ request }) => {
+  const robots = await request.get("/robots.txt");
+
+  expect(robots.status()).toBe(200);
+  const body = await robots.text();
+  expect(body).toContain("Sitemap: https://mustafagokselgokmen.com.tr/sitemap.xml");
+  // Everything behind sign-in answers a crawler with a redirect to /login.
+  for (const path of ["/account", "/admin", "/contact", "/login", "/auth/"]) {
+    expect(body).toContain(`Disallow: ${path}`);
+  }
+});
+
+test("the sitemap lists both languages of both public pages", async ({ request }) => {
+  const response = await request.get("/sitemap.xml");
+
+  expect(response.status()).toBe(200);
+  const xml = await response.text();
+  for (const path of ["/", "/tr", "/privacy", "/tr/privacy"]) {
+    expect(xml).toContain(`<loc>https://mustafagokselgokmen.com.tr${path}</loc>`);
+  }
+  expect(xml).toContain('hreflang="tr"');
+});
+
+test("the sign-in page asks not to be indexed", async ({ page }) => {
+  await page.goto("/login");
+
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+});

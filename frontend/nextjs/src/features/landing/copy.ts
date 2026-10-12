@@ -5,6 +5,10 @@ import type { Locale } from "@/lib/i18n/locale";
  * translation is a type error rather than an English sentence appearing on the Turkish page
  * ([ADR-013](../../../../docs/decisions/013-public-pages-in-two-languages.md)).
  *
+ * The Turkish is not a translation of the English. It is written for a reader who may not work in
+ * software: short sentences, ordinary words, and a technical term explained the first time it is
+ * used. The claims are the same; the sentences are not.
+ *
  * Numbers are not translated: they come from a test runner, and a runner has no language.
  */
 
@@ -80,7 +84,7 @@ const EN: LandingCopy = {
     cards: [
       {
         title: "Backend-for-frontend",
-        body: "The browser talks only to the Next.js server, which keeps the tokens and calls the API. No CORS, no CSRF handling, and nothing in browser storage to steal.",
+        body: "The browser talks only to the Next.js server, which holds the tokens and calls the API. The backend takes a bearer token and never a cookie, so it needs no CORS. The session cookies are SameSite=Lax, and every change is checked against the origin it came from.",
       },
       {
         title: "Transactional outbox",
@@ -185,46 +189,46 @@ const TR: LandingCopy = {
   nav: {
     sections: "Bölümler",
     architecture: "Mimari",
-    evidence: "Kanıt",
+    evidence: "Sayılar",
     decisions: "Kararlar",
     work: "Projeler",
   },
   header: { send: "Mesaj gönder", language: "English" },
   hero: {
-    role: "Kıdemli Yazılım Geliştirici · 20+ yıl",
-    lede: "Zor kısımları şansa bırakmayan sistemler kuruyorum: kimlik, olay teslimi, eşzamanlılık ve servisler arasındaki sınır.",
-    body: "Bu site, anlattığı sistemin kendisi. Tek bir API sözleşmesi, Spring Boot ile yazılmış bir sunucu, onu tüketen bu web uygulaması ve arkasında bir olay hattı. Aşağıdaki her şey ya çalışıyor ya da depoda duruyor; yayında olmayan parçalar bunu kendisi söylüyor.",
-    tryIt: "Uygulamayı dene",
+    role: "Kıdemli Yazılım Geliştirici · 20 yılı aşkın deneyim",
+    lede: "Güvenilir yazılımlar geliştiriyorum. Zor konular üzerinde çalışıyorum: kullanıcı girişi, mesajların kaybolmadan iletilmesi ve aynı anda yapılan değişiklikler.",
+    body: "Bu web sitesi, geliştirdiğim sistemin bir parçasıdır. Sistemin kuralları önce bir API tanımında yazılır. Sunucu Spring Boot ile yazıldı. Bu site de o sunucuyu kullanır. Aşağıda çalışan özellikleri ve henüz yayına alınmamış çalışmaları görebilirsiniz.",
+    tryIt: "Uygulamayı deneyin",
     readSource: "Kaynak kodu",
   },
   terminal: {
     title: "canlı API",
     caption:
-      "Her hata, istemcinin üzerinde dallanabileceği bir code taşıyan bir problem detail (RFC 9457). Yazılmadan önce sözleşmede tanımlandı.",
+      "Bu, sunucunun gerçek cevabıdır. Hata olduğunda cevap her zaman aynı biçimdedir. İçinde bir hata kodu bulunur. Uygulamalar bu koda bakarak ne yapacağına karar verir.",
   },
   architecture: {
     eyebrow: "Mimari",
-    title: "Önce sözleşme, sonra gerisi",
-    lead: "Şartname koddan önce yazılıyor. Sunucu arayüzleri, istemci tipleri ve test takımı ondan üretiliyor; böylece API üzerindeki bir anlaşmazlık üretimde değil, derleme anında ortaya çıkıyor.",
+    title: "Önce tanım, sonra kod",
+    lead: "Önce sistemin nasıl çalışacağını tanımlıyorum. Sonra kodu yazıyorum. Sunucu ve istemci kodunun bir kısmı bu tanımdan otomatik üretiliyor. Böylece uyumsuzluklar yayına çıkmadan önce ortaya çıkıyor.",
     cards: [
       {
-        title: "Önyüz için arka uç (BFF)",
-        body: "Tarayıcı yalnızca Next.js sunucusuyla konuşuyor; token'ları o tutuyor ve API'yi o çağırıyor. CORS yok, CSRF uğraşı yok, tarayıcı deposunda çalınacak bir şey yok.",
+        title: "Web arayüzü için özel sunucu (BFF)",
+        body: "Tarayıcı, API ile doğrudan konuşmaz. Arada bu sitenin kendi sunucusu vardır. Oturum bilgileri o sunucuda kalır. Tarayıcıdaki JavaScript bu bilgileri okuyamaz. Her değişiklik isteğinde, isteğin nereden geldiği kontrol edilir.",
       },
       {
-        title: "Transaction'lı outbox",
-        body: "Değişiklik ve onun olayı birlikte commit ediliyor. Yayımlama sonradan yapılıyor; böylece broker'ın çökmesi bir isteği geri almıyor.",
+        title: "Mesaj ve olay birlikte kaydedilir",
+        body: "Sistem, mesajı ve o mesajla ilgili olayı birlikte kaydeder. Olay daha sonra gönderilir. Gönderim başarısız olsa bile kayıt kaybolmaz.",
       },
       {
-        title: "Hata yapabilen bir tüketici",
-        body: "Teslim en az bir kez, o yüzden işleme idempotent: her olay kimliği işten önce sahipleniliyor, artan beklemeyle yeniden deneniyor, sonra ölü mektup kuyruğuna gidiyor.",
+        title: "Aynı mesaj iki kez gelirse",
+        body: "Bir mesaj bazen iki kez gelebilir. Sistem onu yalnızca bir kez işler. Buna idempotent denir. İşlenemeyen mesajlar ayrı bir kuyruğa alınır ve kaybolmaz.",
       },
     ],
   },
   evidence: {
-    eyebrow: "Kanıt",
-    title: "Sayılar bir test koşucusundan geliyor",
-    lead: "Tahmin değil. Buradaki her sayı, her pull request'te sürekli entegrasyonda bir aracın ekrana yazdığı sayı.",
+    eyebrow: "Sayılar",
+    title: "Sayılar otomatik testlerden geliyor",
+    lead: "Bu sayılar tahmin değil. Kod değişiklikleri birleştirilmeden önce testler otomatik çalışır. Testler sistemin doğru çalıştığını kontrol eder. Buradaki sayılar o testlerin sonucudur.",
     facts: [
       {
         value: "160",
@@ -233,53 +237,53 @@ const TR: LandingCopy = {
       },
       {
         value: "2,889",
-        label: "üretilmiş sözleşme senaryosu",
-        detail: "her koşu yeni girdi deniyor",
+        label: "otomatik üretilen test senaryosu",
+        detail: "her koşuda farklı veriler denenir",
       },
-      { value: "13", label: "karar kaydı", detail: "her biri neye mal olduğunu yazıyor" },
-      { value: "12", label: "merge öncesi kontrol", detail: "üçü imaj güvenlik taraması" },
+      { value: "13", label: "karar kaydı", detail: "her biri kararın nedenini yazar" },
+      { value: "12", label: "birleştirme öncesi kontrol", detail: "üçü güvenlik taraması" },
     ],
   },
   decisions: {
     eyebrow: "Kararlar",
     title: "Dört problem ve her birine ne yapıldığı",
-    lead: "Her biri depoda bir karar kaydı olarak duruyor; neye mal olduğu ve neyden vazgeçildiği dahil.",
+    lead: "Her kararı depoda ayrı bir dosyada yazıyorum. Her dosya kararın nedenini ve neyden vazgeçildiğini anlatır.",
     items: [
       {
-        title: "Tarayıcı hiçbir zaman token tutmaz",
-        body: "Giriş, sunucuda çalışan bir OAuth code flow. Tarayıcıya yalnızca HttpOnly çerezler gidiyor. Eşzamanlı istekler tek bir yenilemeyi paylaşıyor; çünkü refresh token'lar dönüyor ve birini ikinci kez kullanmak tüm aileyi iptal ediyor.",
+        title: "Tarayıcıda oturum anahtarı tutulmaz",
+        body: "Giriş işlemi sunucuda yapılır. Tarayıcıya yalnızca özel çerezler gönderilir. Bu çerezleri sayfadaki JavaScript okuyamaz. Oturum anahtarı her yenilemede değişir ve eski anahtar bir daha kullanılamaz.",
         proof:
-          "Bir tarayıcı testi buldu: önceden getirilen bir bağlantı ile sayfası aynı anda yenilendi ve kullanıcıyı sistemden attı.",
+          "Bu kuralın bir hatası vardı ve onu bir tarayıcı testi buldu. İki istek aynı anda yenileme yaptı ve kullanıcı sistemden çıktı. Hata giderildi.",
       },
       {
-        title: "Bir olay kaybolamaz",
-        body: "Mesaj ve ürettiği olay tek bir transaction'da yazılıyor. Bir yayımcı tabloyu sonradan boşaltıyor; böylece broker'ın kapalı olması ne isteği geri alıyor ne de olayı yutuyor.",
+        title: "Mesajlar kaybolmaz",
+        body: "Sistem, mesajı ve olayını tek bir işlemde kaydeder. İkisi birlikte kaydedilir ya da hiçbiri kaydedilmez. Olayı gönderen servis kapalı olsa bile kayıt yerinde durur.",
         proof:
-          "Tüketici her olay kimliğini iş yapmadan önce sahipleniyor, artan beklemeyle yeniden deniyor ve başaramadığını ölü mektup kuyruğuna koyuyor.",
+          "Olaylar daha sonra sırayla gönderilir. Gönderilemeyen bir olay yeniden denenir. Yine olmazsa ayrı bir kuyruğa alınır.",
       },
       {
-        title: "Tek sözleşme, varsayılan değil ölçülen",
-        body: "Önce OpenAPI belgesi yazılıyor. Sunucu arayüzleri ve istemci tipleri ondan üretiliyor; her arka uç aynı takımla, hiç değiştirilmeden sınanıyor.",
+        title: "Tek bir API tanımı",
+        body: "Tek bir API tanımı kullanıyorum ve bu tanımı test ediyorum. Sunucu kodunun bir kısmı ve istemci tipleri bu tanımdan üretiliyor. Farklı dillerde yazılacak tüm sunucular aynı testlerle kontrol ediliyor.",
         proof:
-          "Schemathesis dokuz gerçek hata buldu: NUL baytının çökerttiği uçtan, boş bir filtrenin geçersiz SQL'e dönüşmesine kadar.",
+          "Testler dokuz gerçek hata buldu. Örneğin boş bırakılan bir filtre, hatalı bir veritabanı sorgusu üretiyordu.",
       },
       {
-        title: "Eşzamanlılığın bir cevabı var",
-        body: "Aynı mesajı düzenleyen iki yönetici birbirinin üzerine yazmıyor: sürüm numarası formla birlikte gidiyor ve arka uç eski olanı 409 ile reddediyor.",
+        title: "Aynı anda yapılan değişiklikler",
+        body: "İki yönetici aynı mesajı aynı anda değiştirebilir. Sistem bunu fark eder ve ikinci değişikliği reddeder. Böylece kimsenin yaptığı değişiklik kaybolmaz.",
         proof:
-          "Bir test, çakışmayı taklit etmek yerine iki tarayıcıyı aynı mesajın üstüne sürerek gerçekten oluşturuyor.",
+          "Bir testte iki tarayıcı aynı mesajı aynı anda değiştirir. Sistem çakışmayı tespit eder ve ikinci isteği geri çevirir.",
       },
     ],
   },
   work: {
-    eyebrow: "Diğer işler",
+    eyebrow: "Projeler",
     title: "Geliştirdiğim ve işlettiğim ürünler",
-    lead: "Bu deponun dışında ve yayında. Her bağlantı çalışan ürüne gidiyor.",
+    lead: "Bu projenin dışında, şu anda yayında olan ürünler. Bağlantılardan ürünleri inceleyebilirsiniz.",
     summaries: {
       notorite:
-        "Pazaryeri yorumlarını ve şikâyet geçmişini okuyup her ürün, satıcı ve marka için tek bir güven puanına çeviriyor; böylece alıcı yıldız ortalaması yerine bir cevap alıyor.",
+        "Pazaryerlerindeki yorumları ve şikâyetleri okur. Her ürün, satıcı ve marka için tek bir güven puanı verir. Böylece alıcı, yıldız ortalamasına bakmak yerine net bir cevap görür.",
       mapsstar:
-        "Bir teklif, dünya haritasındaki idari bir bölgeyi daha yükseğini veren çıkana kadar elinde tutuyor. Savaş yok, kaynak toplama yok: mekaniğin tamamı, uygulamalardan alınan jetonlarla verilen o teklif.",
+        "Dünya haritasındaki bölgeler için teklif verilir. En yüksek teklifi veren kişi o bölgeyi elinde tutar. Daha yüksek bir teklif gelirse bölge el değiştirir. Teklifler, uygulamadan alınan jetonlarla verilir.",
     },
     platforms: {
       Web: "Web",
@@ -288,11 +292,11 @@ const TR: LandingCopy = {
       iOS: "iOS",
     },
   },
-  stack: { eyebrow: "Teknolojiler", title: "Neyle inşa edildi" },
+  stack: { eyebrow: "Teknolojiler", title: "Neyle geliştirildi" },
   contact: {
     eyebrow: "İletişim",
-    title: "İletişime geç",
-    body: "Nasıl çalıştığını görmenin en hızlı yolu kullanmak: giriş yap, bir mesaj gönder ve iş akışında ilerleyişini izle.",
+    title: "İletişime geçin",
+    body: "En hızlı yol uygulamayı denemek: giriş yapın ve bir mesaj gönderin. Sonra mesajınızın durumunu takip edebilirsiniz.",
     send: "Mesaj gönder",
     note: "Uygulamanın giriş sonrası ekranları şimdilik yalnızca İngilizce.",
   },
@@ -304,14 +308,14 @@ const TR: LandingCopy = {
   },
   diagram: {
     label:
-      "Tek bir OpenAPI sözleşmesi API'yi ve istemcilerini sürüyor. Bir istek, iletişim mesajını ve olayını tek transaction'da yazıyor; olay Kafka'ya yayımlanıyor ve ayrı bir bildirim servisi tarafından tüketiliyor.",
-    holdsTokens: "token'ları tutar",
+      "Tek bir API tanımı hem sunucuyu hem istemcileri belirler. Bir istek, mesajı ve olayını tek işlemde kaydeder. Olay sonra gönderilir ve ayrı bir servis onu alır.",
+    holdsTokens: "oturumu tutar",
     planned: "planlanan",
     otherBackends: "Go · .NET · FastAPI planlanan",
-    oneTransaction: "TEK TRANSACTION",
-    consumer: "+ tüketici",
+    oneTransaction: "TEK İŞLEMDE",
+    consumer: "+ alıcı servis",
     inProduction: "yayında",
-    notDeployed: "yazıldı ve test edildi, yayında değil",
+    notDeployed: "yazıldı ve test edildi, henüz yayında değil",
   },
 };
 

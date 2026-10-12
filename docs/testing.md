@@ -114,6 +114,9 @@ And for the public page, which is what a visitor meets first:
 | `/tr` | The same page in Turkish, with `lang`, `hreflang` and the same figures as the English one |
 | The language switch | Crosses to the other language on the page the visitor is on, and back |
 | What is only in English | The Turkish page says that the application behind sign-in is not translated |
+| `robots.txt` | Points at the sitemap, keeps a crawler out of the signed-in area, and leaves `/login` crawlable so its `noindex` can be read |
+| `sitemap.xml` | Both languages of both public pages, each listing the other |
+| The sign-in page | Asks not to be indexed |
 
 That second row exists because production once served this page under a policy that blocked every
 stylesheet and script. The HTML stayed perfect, so the build, the unit tests and a `curl` of the

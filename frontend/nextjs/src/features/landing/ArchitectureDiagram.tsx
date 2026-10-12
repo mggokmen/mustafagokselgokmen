@@ -1,16 +1,19 @@
+import type { LandingCopy } from "./copy";
+
 /**
  * The system as it is, drawn rather than described. Solid lines are what runs in production;
  * dashed is what exists in the repository but is not deployed (ADR-011), which the legend says
  * out loud instead of letting the picture imply more than is true.
  */
-export function ArchitectureDiagram({ className }: { className?: string }) {
+export function ArchitectureDiagram({
+  className,
+  copy,
+}: {
+  className?: string;
+  copy: LandingCopy["diagram"];
+}) {
   return (
-    <svg
-      viewBox="0 0 440 272"
-      className={className}
-      role="img"
-      aria-label="One OpenAPI contract drives the API and its clients. A request writes a contact message and an event in one transaction; the event is published to Kafka and consumed by a separate notification service."
-    >
+    <svg viewBox="0 0 440 272" className={className} role="img" aria-label={copy.label}>
       <defs>
         <marker
           id="arrow"
@@ -92,7 +95,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
         Next.js server
       </text>
       <text x="110" y="100" textAnchor="middle" className="fill-slate-500 text-[10px]">
-        holds the tokens
+        {copy.holdsTokens}
       </text>
 
       {/* mobile, planned */}
@@ -111,7 +114,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
         Android · iOS
       </text>
       <text x="330" y="100" textAnchor="middle" className="fill-slate-500 text-[10px]">
-        planned
+        {copy.planned}
       </text>
 
       {/* api */}
@@ -134,7 +137,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
         Spring Boot API
       </text>
       <text x="220" y="152" textAnchor="middle" className="fill-slate-500 text-[10px]">
-        Go · .NET · FastAPI planned
+        {copy.otherBackends}
       </text>
 
       <path
@@ -170,7 +173,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
         textAnchor="middle"
         className="fill-slate-400 text-[10px] tracking-wide"
       >
-        ONE TRANSACTION
+        {copy.oneTransaction}
       </text>
       <text x="175" y="216" textAnchor="middle" className="fill-slate-200 text-[11px]">
         contact_messages
@@ -210,7 +213,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
         Kafka
       </text>
       <text x="391" y="214" textAnchor="middle" className="fill-slate-500 text-[10px]">
-        + consumer
+        {copy.consumer}
       </text>
 
       {/* postgres */}
@@ -239,7 +242,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
       <g>
         <line x1="12" y1="258" x2="36" y2="258" stroke="#64748b" strokeWidth="1.5" />
         <text x="42" y="261" className="fill-slate-400 text-[10px]">
-          in production
+          {copy.inProduction}
         </text>
         <line
           x1="130"
@@ -251,7 +254,7 @@ export function ArchitectureDiagram({ className }: { className?: string }) {
           strokeDasharray="4 3"
         />
         <text x="160" y="261" className="fill-slate-500 text-[10px]">
-          built and tested, not deployed
+          {copy.notDeployed}
         </text>
       </g>
     </svg>

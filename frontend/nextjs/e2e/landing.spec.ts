@@ -156,7 +156,7 @@ test("the Turkish page is the same page in another language, not another site", 
 
   expect(response?.status()).toBe(200);
   await expect(page).toHaveTitle("Mustafa Göksel Gökmen · Kıdemli Yazılım Geliştirici");
-  await expect(page.getByRole("heading", { name: "Önce sözleşme, sonra gerisi" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Önce tanım, sonra kod" })).toBeVisible();
   // The numbers are the one thing both languages share: a test runner has no language. Comparing
   // the two pages keeps that true without this test having to know the current count.
   const turkishFigure = await page.locator("dl dt").first().innerText();

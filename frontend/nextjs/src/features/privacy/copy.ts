@@ -35,7 +35,7 @@ const EN: PrivacyCopy = {
         "Signing in happens through Google. This site never sees your Google password. Google tells it:",
       ],
       bullets: [
-        "an identifier Google uses for your account (the `sub` claim), which is what identifies you here — not your email address",
+        "an identifier Google uses for your account (the `sub` claim), which is what identifies you here â not your email address",
         "your email address",
         "your display name",
         "the address of your profile picture",
@@ -57,9 +57,9 @@ const EN: PrivacyCopy = {
         "Three cookies, all of them `HttpOnly`: JavaScript in your browser cannot read them, and none of them is used for advertising or analytics.",
       ],
       bullets: [
-        "`access_token` — proves who you are for about 15 minutes",
-        "`refresh_token` — gets a new access token for up to 30 days, and is replaced every time it is used",
-        "`sign_in` — exists for ten minutes during sign-in, to verify that the response coming back from Google belongs to the request this site made",
+        "`access_token` â proves who you are for about 15 minutes",
+        "`refresh_token` â gets a new access token for up to 30 days, and is replaced every time it is used",
+        "`sign_in` â exists for ten minutes during sign-in, to verify that the response coming back from Google belongs to the request this site made",
       ],
     },
     {
@@ -71,7 +71,7 @@ const EN: PrivacyCopy = {
     {
       title: "Who can see it",
       paragraphs: [
-        "You can see your own messages. An administrator — the person who runs this site — can see every message together with the name and email address of whoever sent it, in order to work through them. Nothing is sold, and nothing is shared for advertising.",
+        "You can see your own messages. An administrator â the person who runs this site â can see every message together with the name and email address of whoever sent it, in order to work through them. Nothing is sold, and nothing is shared for advertising.",
         "Three other parties are necessarily involved:",
       ],
       bullets: [
@@ -103,74 +103,74 @@ const EN: PrivacyCopy = {
 const TR: PrivacyCopy = {
   title: "Gizlilik",
   intro:
-    "Bu bir portföy projesi: tek bir API sözleşmesinin birkaç platformda nasıl uygulandığını göstermek için yazılmış, küçük ama gerçek bir uygulama. Giriş yapan kişiler hakkında gerçek veri tutuyor; bu sayfa da tam olarak neyi tuttuğunu yazıyor.",
+    "Bu bir portföy projesidir. Küçük ama gerçek bir uygulamadır. Giriş yapan kişiler hakkında gerçek veri tutar. Bu sayfa, tam olarak hangi verilerin tutulduğunu anlatır.",
   updated: "Son güncelleme: 12 Ekim 2026",
   sections: [
     {
-      title: "Giriş yaptığınızda ne saklanıyor",
+      title: "Giriş yaptığınızda ne saklanır",
       paragraphs: [
-        "Giriş Google üzerinden yapılıyor. Bu site Google parolanızı hiçbir zaman görmüyor. Google ona şunları söylüyor:",
+        "Giriş Google ile yapılır. Bu site Google parolanızı görmez. Google şu bilgileri verir:",
       ],
       bullets: [
-        "Google'ın hesabınız için kullandığı kimlik (`sub` değeri) — sizi burada tanımlayan şey bu, e-posta adresiniz değil",
+        "Google hesabınızın kimlik numarası (`sub` değeri). Sizi burada bu numara tanımlar, e-posta adresiniz değil.",
         "e-posta adresiniz",
-        "görünen adınız",
+        "adınız",
         "profil fotoğrafınızın adresi",
       ],
     },
     {
-      title: "Mesaj gönderdiğinizde ne saklanıyor",
+      title: "Mesaj gönderdiğinizde ne saklanır",
       paragraphs: [],
       bullets: [
-        "yazdığınız konu ve metin",
-        "durumu: yeni, işlemde ve çözüldü arasında ilerlerken",
-        "ne zaman gönderildiği ve en son ne zaman değiştiği",
-        "hesabınıza bir referans",
+        "yazdığınız konu ve mesaj",
+        "mesajın durumu: yeni, işlemde veya çözüldü",
+        "mesajın gönderilme ve son değişiklik zamanı",
+        "mesajın hangi hesaba ait olduğu",
       ],
     },
     {
       title: "Çerezler",
       paragraphs: [
-        "Üç çerez, üçü de `HttpOnly`: tarayıcınızdaki JavaScript bunları okuyamaz ve hiçbiri reklam veya analiz için kullanılmaz.",
+        "Üç çerez kullanılır. Üçü de `HttpOnly` işaretlidir. Yani sayfadaki JavaScript bunları okuyamaz. Hiçbiri reklam veya takip için kullanılmaz.",
       ],
       bullets: [
-        "`access_token` — yaklaşık 15 dakika boyunca kim olduğunuzu kanıtlar",
-        "`refresh_token` — 30 güne kadar yeni erişim token'ı alır ve her kullanıldığında yenisiyle değiştirilir",
-        "`sign_in` — giriş sırasında on dakika yaşar; Google'dan dönen yanıtın bu sitenin yaptığı isteğe ait olduğunu doğrular",
+        "`access_token` — yaklaşık 15 dakika boyunca kim olduğunuzu doğrular",
+        "`refresh_token` — 30 güne kadar yeni giriş anahtarı alır. Her kullanımda yenisiyle değişir.",
+        "`sign_in` — giriş sırasında on dakika yaşar. Google'dan gelen cevabın doğru olduğunu kontrol eder.",
       ],
     },
     {
       title: "Sunucu kayıtları",
       paragraphs: [
-        "Web sunucusu, web sunucularının yaptığı gibi istekleri IP adresleriyle birlikte kaydediyor. IP adresiniz ayrıca, giriş ve mesaj gönderme denemelerini sınırlamak için bellekte geçici olarak sayılıyor. Veritabanına yazılmıyor.",
+        "Sunucu, gelen istekleri IP adresiyle birlikte kaydeder. IP adresiniz ayrıca kısa süre bellekte tutulur. Bunun tek amacı çok sık giriş ve mesaj denemesini engellemektir. Bu bilgi veritabanına yazılmaz.",
       ],
     },
     {
-      title: "Kimler görebiliyor",
+      title: "Kimler görebilir",
       paragraphs: [
-        "Kendi mesajlarınızı siz görebiliyorsunuz. Bir yönetici — bu siteyi işleten kişi — mesajları ele alabilmek için her mesajı, gönderenin adı ve e-posta adresiyle birlikte görebiliyor. Hiçbir şey satılmıyor, reklam için hiçbir şey paylaşılmıyor.",
-        "Zorunlu olarak işin içinde olan üç taraf var:",
+        "Kendi mesajlarınızı siz görürsünüz. Yönetici — yani bu siteyi işleten kişi — tüm mesajları görür. Mesajla birlikte gönderenin adını ve e-posta adresini de görür. Bunun amacı mesajları yanıtlayabilmektir. Hiçbir veri satılmaz ve reklam için paylaşılmaz.",
+        "Üç kuruluş zorunlu olarak işin içindedir:",
       ],
       bullets: [
-        "**Google**, sizi doğrulayan taraf. O adım için kendi gizlilik politikası geçerli.",
-        "**Cloudflare**, bu siteye gelen trafiğin üzerinden geçtiği taraf",
-        "uygulamanın çalıştığı sunucunun **barındırma sağlayıcısı**",
+        "**Google**: girişinizi doğrular. O adım için Google'ın gizlilik politikası geçerlidir.",
+        "**Cloudflare**: siteye gelen trafik buradan geçer.",
+        "**Barındırma sağlayıcısı**: uygulamanın çalıştığı sunucuyu sağlar.",
       ],
     },
     {
-      title: "Ne kadar süre saklanıyor",
+      title: "Ne kadar süre saklanır",
       paragraphs: [
-        "Hesabınız ve mesajlarınız silinene kadar saklanıyor. Refresh token'lar 30 gün sonra geçersiz oluyor ve tarayıcınızdaki değerin kendisi yerine özetlenmiş (hash'lenmiş) hâli saklanıyor.",
+        "Hesabınız ve mesajlarınız silinene kadar saklanır. Giriş anahtarları 30 gün sonra geçersiz olur. Anahtarın kendisi saklanmaz; yalnızca şifrelenmiş bir özeti saklanır.",
       ],
     },
     {
-      title: "Verilerinizin silinmesi",
+      title: "Verilerinizi sildirmek",
       paragraphs: [],
       email: {
         before: "Giriş yaptığınız adresten",
         address: "mustafagokselgokmen@gmail.com",
         after:
-          "adresine yazın; hesap ve mesajları kaldırılsın. Henüz kendi kendine silme düğmesi yok; bu sayfa aksini iddia etseydi dürüst olmazdı.",
+          "adresine yazın. Hesabınız ve mesajlarınız silinir. Şu an uygulamada silme düğmesi yok. Bu sayfa aksini söyleseydi doğru olmazdı.",
       },
     },
   ],

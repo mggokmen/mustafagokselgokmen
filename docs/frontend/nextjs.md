@@ -159,8 +159,10 @@ code behind them.
 - **Nothing on the page is an estimate.** Every number comes from a runner or the repository, and
   the architecture diagram marks what is not deployed.
 - **A crawler is given a map.** `app/robots.ts` points at `app/sitemap.ts` and keeps search
-  engines out of everything behind sign-in, which would only ever answer them with a redirect to
-  `/login`. The sitemap lists both languages of both public pages, each entry naming the other.
+  engines out of the signed-in area, which would only ever answer them with a redirect. `/login`
+  is left crawlable on purpose: it carries `noindex`, and a crawler can only obey that if it is
+  allowed to fetch the page. The sitemap lists both languages of both public pages, each entry
+  naming the other. None of it is access control — robots are asked, not stopped.
 - **Two languages, in the path.** English keeps the unprefixed routes, Turkish lives under `/tr`,
   and both are prerendered ([ADR-013](../decisions/013-public-pages-in-two-languages.md)). Both
   dictionaries sit under one type in `features/*/copy.ts`, so a missing translation is a type

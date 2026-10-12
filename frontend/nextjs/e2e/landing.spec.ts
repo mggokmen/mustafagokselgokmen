@@ -205,9 +205,11 @@ test("a crawler is told what to read and what to leave alone", async ({ request 
   const body = await robots.text();
   expect(body).toContain("Sitemap: https://mustafagokselgokmen.com.tr/sitemap.xml");
   // Everything behind sign-in answers a crawler with a redirect to /login.
-  for (const path of ["/account", "/admin", "/contact", "/login", "/auth/"]) {
+  for (const path of ["/account", "/admin", "/contact", "/auth/"]) {
     expect(body).toContain(`Disallow: ${path}`);
   }
+  // /login must stay crawlable, or the noindex on it is never read.
+  expect(body).not.toContain("Disallow: /login");
 });
 
 test("the sitemap lists both languages of both public pages", async ({ request }) => {

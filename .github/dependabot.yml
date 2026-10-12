@@ -38,6 +38,15 @@ updates:
         patterns: ["next", "eslint-config-next", "@next/*"]
       react:
         patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+    ignore:
+      # The type definitions follow the runtime, and the image's Node major is a project decision
+      # of its own (see the Docker entry below).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # ESLint 10 breaks the eslint-plugin-react that eslint-config-next bundles. It can come back
+      # when Next ships a configuration that works with it.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
 
   # Java and PostgreSQL major versions are project decisions, not bot updates (docs/devops.md).
   - package-ecosystem: docker

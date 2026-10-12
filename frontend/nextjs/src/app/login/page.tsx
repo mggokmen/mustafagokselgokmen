@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/auth/current-user";
 import { safeReturnTo } from "@/lib/auth/return-to";
 
-export const metadata = { title: "Sign in" };
+/** A sign-in page has nothing to offer a search result, and robots.txt says the same thing. */
+export const metadata = { title: "Sign in", robots: { index: false, follow: false } };
 
 /** Why an attempt didn't finish. The reasons are this app's own, not the provider's. */
 const MESSAGES: Record<string, string> = {

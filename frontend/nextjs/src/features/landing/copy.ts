@@ -102,9 +102,9 @@ const EN: LandingCopy = {
     lead: "Not estimates. Each of these is printed by a tool in continuous integration, on every pull request.",
     facts: [
       {
-        value: "160",
+        value: "166",
         label: "automated tests",
-        detail: "63 API · 7 consumer · 57 web · 33 browser",
+        detail: "63 API · 7 consumer · 60 web · 36 browser",
       },
       { value: "2,889", label: "generated contract cases", detail: "every run explores new input" },
       { value: "13", label: "decision records", detail: "each one says what it costs" },
@@ -231,9 +231,9 @@ const TR: LandingCopy = {
     lead: "Bu sayılar tahmin değil. Kod değişiklikleri birleştirilmeden önce testler otomatik çalışır. Testler sistemin doğru çalıştığını kontrol eder. Buradaki sayılar o testlerin sonucudur.",
     facts: [
       {
-        value: "160",
+        value: "166",
         label: "otomatik test",
-        detail: "63 API · 7 tüketici · 57 web · 33 tarayıcı",
+        detail: "63 API · 7 tüketici · 60 web · 36 tarayıcı",
       },
       {
         value: "2,889",

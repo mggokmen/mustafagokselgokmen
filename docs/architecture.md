@@ -273,3 +273,4 @@ contract test suite unchanged.
 - [ADR-010: Consumer resilience and idempotency](decisions/010-event-consumer-resilience.md)
 - [ADR-011: Where and how 0.2.0 is deployed](decisions/011-deployment.md)
 - [ADR-012: The application sends its own security headers](decisions/012-security-headers.md)
+- [ADR-013: The public pages are published in two languages](decisions/013-public-pages-in-two-languages.md)

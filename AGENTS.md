@@ -118,7 +118,12 @@ running anything.
 
 ## Coding Standards
 
-- **Language:** all identifiers, comments, documentation, commit messages and API text are in English.
+- **Language:**
+  - **The code is English:** identifiers, comments, documentation, commit messages, ADRs and
+    API text, including problem details.
+  - **The public pages are English and Turkish.** English keeps the unprefixed paths; Turkish
+    lives under `/tr` ([ADR-013](docs/decisions/013-public-pages-in-two-languages.md)). The
+    application behind sign-in is English, because its sentences come from the API.
 - **Formatting and linting** are automated, not debated:
 
 | Language | Tooling |

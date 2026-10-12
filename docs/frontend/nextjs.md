@@ -35,6 +35,7 @@ src/
 │   ├── (public)/layout.tsx          the public shell: header, footer
 │   ├── (public)/page.tsx            the landing page
 │   ├── (public)/privacy/page.tsx    what is stored, and why
+│   ├── tr/                          the same public pages in Turkish (ADR-013)
 │   ├── login/page.tsx               "Sign in with Google"
 │   ├── auth/google/route.ts         starts the OAuth flow
 │   ├── auth/google/callback/route.ts
@@ -157,6 +158,11 @@ code behind them.
   **the build is given no configuration** ([devops.md](../devops.md#images)).
 - **Nothing on the page is an estimate.** Every number comes from a runner or the repository, and
   the architecture diagram marks what is not deployed.
+- **Two languages, in the path.** English keeps the unprefixed routes, Turkish lives under `/tr`,
+  and both are prerendered ([ADR-013](../decisions/013-public-pages-in-two-languages.md)). Both
+  dictionaries sit under one type in `features/*/copy.ts`, so a missing translation is a type
+  error. Numbers are not translated. The switch is the only client component on these pages,
+  because it has to know which page the visitor is on.
 
 ## Security headers
 

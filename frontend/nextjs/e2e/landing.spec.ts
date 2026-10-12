@@ -148,3 +148,52 @@ test("a visitor without a session is taken through sign-in and left at the form"
   await expect(page).toHaveURL("/contact");
   await expect(page.getByLabel("Subject")).toBeVisible();
 });
+
+test("the Turkish page is the same page in another language, not another site", async ({
+  page,
+}) => {
+  const response = await page.goto("/tr");
+
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveTitle("Mustafa Göksel Gökmen · Kıdemli Yazılım Geliştirici");
+  await expect(page.getByRole("heading", { name: "Önce sözleşme, sonra gerisi" })).toBeVisible();
+  // The numbers are the one thing both languages share: a test runner has no language. Comparing
+  // the two pages keeps that true without this test having to know the current count.
+  const turkishFigure = await page.locator("dl dt").first().innerText();
+  await page.goto("/");
+  expect(turkishFigure).toBe(await page.locator("dl dt").first().innerText());
+  await page.goto("/tr");
+  await expect(page.locator("div[lang='tr']").first()).toBeVisible();
+
+  const alternates = await page
+    .locator("link[rel='alternate']")
+    .evaluateAll((links) =>
+      links.map(
+        (link) =>
+          `${link.getAttribute("hreflang")} ${new URL((link as HTMLLinkElement).href).pathname}`,
+      ),
+    );
+  expect(alternates).toEqual(expect.arrayContaining(["en /", "tr /tr"]));
+});
+
+test("the language switch crosses over and back, keeping the page", async ({ page }) => {
+  await page.goto("/privacy");
+
+  await page.getByRole("link", { name: "Türkçe" }).click();
+  await expect(page).toHaveURL("/tr/privacy");
+  await expect(page.getByRole("heading", { name: "Gizlilik", level: 1 })).toBeVisible();
+
+  await page.getByRole("link", { name: "English" }).click();
+  await expect(page).toHaveURL("/privacy");
+  await expect(page.getByRole("heading", { name: "Privacy", level: 1 })).toBeVisible();
+});
+
+test("the Turkish page says what is only in English", async ({ page }) => {
+  await page.goto("/tr");
+
+  // The application behind sign-in is not translated, and the page admits it rather than
+  // surprising a visitor who follows the button (ADR-013).
+  await expect(
+    page.getByText("Uygulamanın giriş sonrası ekranları şimdilik yalnızca İngilizce."),
+  ).toBeVisible();
+});

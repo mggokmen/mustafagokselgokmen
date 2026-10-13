@@ -204,7 +204,29 @@ Run steps 3 and 4 with **`contract/run-tests.sh`** (requires Docker). The script
    PostgreSQL, the API built from the working tree and the mock identity provider, with no ports on
    the host
 2. runs Hurl, then Schemathesis
-3. removes the project, printing the API log on failure
+3. checks its own link guard against four outputs — a healthy run, no links covered, half of them,
+   and a run with no stateful phase — so a broken guard fails before it can wave a broken run
+   through
+4. **requires the stateful phase to have covered every API link it found**
+5. removes the project, printing the API log on failure
+
+### Reading a Schemathesis run
+
+A green run prints three things that look like problems and are not. They are listed here because
+"passed" on its own does not say how much was actually exercised, and a warning nobody can explain
+is a warning everybody learns to ignore.
+
+| What it prints | Why | When it would be a real problem |
+|---|---|---|
+| `⏭ Examples — 8 skipped` | The contract carries no `examples`, so that phase has nothing to run. | If examples are added and the phase still skips them. |
+| `validation_mismatch` on `POST /auth/google`, `POST /auth/refresh` and `PUT …/status` | Their bodies are an opaque Google ID token, an opaque refresh token and a workflow transition. The schema cannot describe a valid one, so nearly every generated body is refused — correctly. | If it names an operation whose input the schema *can* describe. Then the schema and the validation really disagree. |
+| `missing_auth`: *authentication stopped working mid-run* | The coverage and fuzzing phases deliberately send requests with missing or broken credentials — that is what the `ignored_auth` check is for — and the API answers 401. The heuristic reads those 401s as lost credentials. Measured per phase: the warning appears in coverage and fuzzing, and **never in the stateful phase**, which uses real chained credentials. | If the stateful phase stops covering its links. That is the check the script makes. |
+| `N generated, N passed, M skipped` | Hypothesis discards generated cases it cannot satisfy or has already tried. The counts differ on every run, because the inputs do. | If `passed` ever drops below `generated`. |
+
+**The link check is the guard against silent loss.** If authentication genuinely broke, every phase
+would still report "passed" while chaining nothing, so the script fails the run unless the stateful
+phase covered all of the links it selected. That is the part of the suite that can only work with a
+real, working session.
 
 CI runs the same script in the `Contract tests` job.
 

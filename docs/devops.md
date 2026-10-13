@@ -160,9 +160,14 @@ Steps and commands: [`deploy/README.md`](../deploy/README.md).
 - **Tools** used in workflows are pinned to a version (`@redocly/cli@2.54.0`, `oasdiff@v1.32.1`).
 - **Dependabot** checks Maven, Docker, Docker Compose and GitHub Actions weekly. It opens pull
   requests against `develop`, using Conventional Commit messages.
-- **Major versions of Java (`eclipse-temurin`) and PostgreSQL** are ignored by Dependabot. Moving
-  to a new major version is a project decision that changes the build, the images, CI and the
-  documentation together.
+- **Some majors are ignored by Dependabot**, because taking them is a project decision rather than
+  a bot update:
+  - **Java (`eclipse-temurin`), Node and PostgreSQL**: moving to a new major changes the build, the
+    images, CI and the documentation together.
+  - **`@types/node`**: the type definitions follow the runtime. Letting them run ahead would
+    type-check the build against a Node that production does not run.
+  - **`eslint`**: ESLint 10 breaks the `eslint-plugin-react` that `eslint-config-next` bundles. It
+    comes back when Next ships a configuration that works with it.
 - **Vulnerability gates:**
   - Trivy scans images and fails on CRITICAL or HIGH findings that have a fix available.
   - CodeQL scans the code.

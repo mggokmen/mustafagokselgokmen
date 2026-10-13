@@ -1,6 +1,6 @@
 {
   "name": "mustafagokselgokmen-web",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "scripts": {
     "gen:api": "openapi-typescript ../../contract/openapi.yaml -o src/lib/api/schema.d.ts",
@@ -18,11 +18,11 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "next": "16.3.8",
+    "next": "16.4.0",
     "openapi-fetch": "^0.17.0",
     "openid-client": "^6.8.8",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "server-only": "^0.0.1",
     "zod": "^4.6.5"
   },
@@ -33,13 +33,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.0",
     "eslint-config-prettier": "^10.1.8",
     "openapi-typescript": "^7.13.0",
     "prettier": "^3.9.9",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.3"
   },
   "engines": {
     "node": ">=24"

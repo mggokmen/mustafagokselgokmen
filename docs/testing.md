@@ -204,8 +204,11 @@ Run steps 3 and 4 with **`contract/run-tests.sh`** (requires Docker). The script
    PostgreSQL, the API built from the working tree and the mock identity provider, with no ports on
    the host
 2. runs Hurl, then Schemathesis
-3. **requires the stateful phase to have covered every API link it found**
-4. removes the project, printing the API log on failure
+3. checks its own link guard against four outputs — a healthy run, no links covered, half of them,
+   and a run with no stateful phase — so a broken guard fails before it can wave a broken run
+   through
+4. **requires the stateful phase to have covered every API link it found**
+5. removes the project, printing the API log on failure
 
 ### Reading a Schemathesis run
 

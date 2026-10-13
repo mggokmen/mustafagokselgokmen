@@ -31,4 +31,25 @@ trap cleanup EXIT
 "${compose[@]}" down --volumes --remove-orphans >/dev/null 2>&1 || true
 "${compose[@]}" up --detach --build --wait api mock-oidc
 "${compose[@]}" run --rm hurl
-"${compose[@]}" run --rm schemathesis
+
+# Schemathesis exits non-zero when a check fails, which covers wrong answers. It does not cover
+# coverage going quiet: if authentication stopped working for real, the stateful phase would still
+# report "passed" while chaining nothing at all. So the run must also have exercised every API link
+# it found, because those chains are the authenticated ones (docs/testing.md#contract-tests).
+report="$(mktemp)"
+set -o pipefail
+"${compose[@]}" run --rm schemathesis 2>&1 | tee "$report"
+
+links="$(sed -nE 's#.*API Links:[[:space:]]+([0-9]+) covered / ([0-9]+) selected.*#\1 \2#p' "$report" | head -1)"
+covered="${links%% *}"
+selected="${links##* }"
+rm -f "$report"
+
+if [ -z "$links" ] || [ "$covered" -lt 1 ] || [ "$covered" != "$selected" ]; then
+  echo "Contract tests: the stateful phase covered ${covered:-no} of ${selected:-?} API links." >&2
+  echo "Those chains are what prove the authenticated operations are reached, so this counts as a" >&2
+  echo "failure even though every check passed." >&2
+  exit 1
+fi
+
+echo "Contract tests: $covered of $selected API links covered by the stateful phase."

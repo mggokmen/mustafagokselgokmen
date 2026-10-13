@@ -26,8 +26,8 @@
 		     CVE-2026-68525 (critical). Remove this override once the parent manages 11.0.26 or later. -->
 		<tomcat.version>11.0.26</tomcat.version>
 		<contract.spec>${project.basedir}/../../contract/openapi.yaml</contract.spec>
-		<bucket4j.version>8.20.0</bucket4j.version>
-		<openapi-generator.version>7.25.0</openapi-generator.version>
+		<bucket4j.version>8.21.0</bucket4j.version>
+		<openapi-generator.version>7.26.0</openapi-generator.version>
 		<spotless.version>3.10.4</spotless.version>
 		<google-java-format.version>1.36.1</google-java-format.version>
 		<!-- Spring Boot 4.1.1 manages Jackson 3.1.5, which has CVE-2026-89407, CVE-2026-89425,
@@ -43,7 +43,7 @@
 			<dependency>
 				<groupId>at.yawk.lz4</groupId>
 				<artifactId>lz4-java</artifactId>
-				<version>1.11.4</version>
+				<version>1.12.0</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

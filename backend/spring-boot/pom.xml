@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.mustafagokselgokmen</groupId>
 	<artifactId>api</artifactId>
-	<version>0.7.0</version>
+	<version>0.7.1</version>
 	<name>api</name>
 	<description>mustafagokselgokmen REST API (Spring Boot implementation)</description>
 	<licenses>

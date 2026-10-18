@@ -91,7 +91,7 @@ const EN: PrivacyCopy = {
       paragraphs: [],
       email: {
         before: "Write to",
-        address: "mustafagokselgokmen@gmail.com",
+        address: "iletisim@mustafagokselgokmen.com.tr",
         after:
           "from the address you signed in with, and the account and its messages will be removed. There is no self-service deletion button yet; this page would be dishonest if it claimed otherwise.",
       },
@@ -168,7 +168,7 @@ const TR: PrivacyCopy = {
       paragraphs: [],
       email: {
         before: "Giriş yaptığınız adresten",
-        address: "mustafagokselgokmen@gmail.com",
+        address: "iletisim@mustafagokselgokmen.com.tr",
         after:
           "adresine yazın. Hesabınız ve mesajlarınız silinir. Şu an uygulamada silme düğmesi yok. Bu sayfa aksini söyleseydi doğru olmazdı.",
       },

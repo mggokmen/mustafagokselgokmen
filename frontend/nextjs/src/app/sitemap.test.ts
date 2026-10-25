@@ -7,10 +7,10 @@ const entries = sitemap();
 describe("sitemap", () => {
   it("lists every public page once per language", () => {
     expect(entries.map((entry) => entry.url)).toEqual([
-      "https://mustafagokselgokmen.com.tr/",
-      "https://mustafagokselgokmen.com.tr/tr",
-      "https://mustafagokselgokmen.com.tr/privacy",
-      "https://mustafagokselgokmen.com.tr/tr/privacy",
+      "https://www.mustafagokselgokmen.com.tr/",
+      "https://www.mustafagokselgokmen.com.tr/tr",
+      "https://www.mustafagokselgokmen.com.tr/privacy",
+      "https://www.mustafagokselgokmen.com.tr/tr/privacy",
     ]);
   });
 
@@ -26,7 +26,7 @@ describe("sitemap", () => {
       ...Object.values(entry.alternates?.languages ?? {}),
     ]);
     for (const url of urls) {
-      expect(url).toMatch(/^https:\/\/mustafagokselgokmen\.com\.tr(\/|$)/);
+      expect(url).toMatch(/^https:\/\/www\.mustafagokselgokmen\.com\.tr(\/|$)/);
     }
   });
 });

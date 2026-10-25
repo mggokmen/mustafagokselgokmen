@@ -114,7 +114,7 @@ test("a link to this site unfolds into a card that says who it is", async ({ pag
   // The card's address is absolute and canonical, because a scraper reads it from somewhere else
   // entirely. The image itself belongs to this build, so it is fetched from this server.
   const declared = await page.locator('meta[property="og:image"]').getAttribute("content");
-  expect(declared).toMatch(/^https:\/\/mustafagokselgokmen\.com\.tr\/opengraph-image/);
+  expect(declared).toMatch(/^https:\/\/www\.mustafagokselgokmen\.com\.tr\/opengraph-image/);
 
   const image = await request.get(new URL(declared ?? "").pathname);
   expect(image.status()).toBe(200);
@@ -203,7 +203,7 @@ test("a crawler is told what to read and what to leave alone", async ({ request 
 
   expect(robots.status()).toBe(200);
   const body = await robots.text();
-  expect(body).toContain("Sitemap: https://mustafagokselgokmen.com.tr/sitemap.xml");
+  expect(body).toContain("Sitemap: https://www.mustafagokselgokmen.com.tr/sitemap.xml");
   // Everything behind sign-in answers a crawler with a redirect to /login.
   for (const path of ["/account", "/admin", "/contact", "/auth/"]) {
     expect(body).toContain(`Disallow: ${path}`);
@@ -218,7 +218,7 @@ test("the sitemap lists both languages of both public pages", async ({ request }
   expect(response.status()).toBe(200);
   const xml = await response.text();
   for (const path of ["/", "/tr", "/privacy", "/tr/privacy"]) {
-    expect(xml).toContain(`<loc>https://mustafagokselgokmen.com.tr${path}</loc>`);
+    expect(xml).toContain(`<loc>https://www.mustafagokselgokmen.com.tr${path}</loc>`);
   }
   expect(xml).toContain('hreflang="tr"');
 });
